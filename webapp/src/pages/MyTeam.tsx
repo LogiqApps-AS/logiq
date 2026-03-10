@@ -4,13 +4,14 @@ import {
   Card,
   Persona,
   Button,
-  Tooltip,
+  ProgressBar,
   makeStyles,
+  mergeClasses,
   shorthands,
   tokens,
-  Tab,
   TabList,
-  ProgressBar,
+  Tab,
+  Tooltip,
 } from "@fluentui/react-components";
 import {
   Warning16Filled,
@@ -20,10 +21,11 @@ import {
   ArrowTrendingDown20Regular,
   Lightbulb20Regular,
 } from "@fluentui/react-icons";
+import { AISummaryCard, InsightItem } from "../components/AISummaryCard";
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import SkillsTab from "../components/SkillsTab";
 import DeliveryTab from "../components/DeliveryTab";
 import { useEmployees } from "../hooks/useApiData";
@@ -57,45 +59,6 @@ const useStyles = makeStyles({
     color: "#5b5fc7",
     ":hover": { backgroundColor: "#d8dcf5" },
   },
-  summaryCard: {
-    ...shorthands.border("1px", "solid", "#d8dcf5"),
-    borderRadius: "12px",
-    padding: "20px",
-    marginBottom: "20px",
-    backgroundColor: "#fafaff",
-  },
-  summaryHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginBottom: "12px",
-  },
-  summaryIcon: { color: "#5b5fc7" },
-  summaryBadge: {
-    display: "inline-flex",
-    fontSize: "10px",
-    fontWeight: 600,
-    padding: "2px 8px",
-    borderRadius: "4px",
-    backgroundColor: "#e8ebf9",
-    color: "#5b5fc7",
-  },
-  insightGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "12px",
-    marginTop: "16px",
-    "@media (max-width: 640px)": { gridTemplateColumns: "1fr" },
-  },
-  insightItem: {
-    display: "flex",
-    gap: "10px",
-    padding: "12px",
-    borderRadius: "8px",
-    backgroundColor: tokens.colorNeutralBackground1,
-    ...shorthands.border("1px", "solid", tokens.colorNeutralStroke2),
-  },
-  insightIcon: { flexShrink: 0, marginTop: "2px" },
 });
 
 const getScoreColor = (score: number) => {
@@ -164,7 +127,7 @@ const MyTeam = () => {
   const summary = employees ? generateTeamSummary(employees) : null;
 
   return (
-    <AppShell>
+    <PageContainer>
       <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
         <PageHeader title="My Team" subtitle={employees ? `${employees.length} team members` : "Loading..."} />
 
@@ -179,73 +142,53 @@ const MyTeam = () => {
           isError ? <ErrorState message="Failed to load team data." onRetry={() => refetch()} /> :
           <>
             {summary && (
-              <div className={styles.summaryCard}>
-                <div className={styles.summaryHeader}>
-                  <Sparkle20Filled className={styles.summaryIcon} />
-                  <Text weight="semibold" size={400}>Team Insights</Text>
-                  <span className={styles.summaryBadge}>AI Summary</span>
-                </div>
-                <Text size={300} style={{ color: tokens.colorNeutralForeground2, lineHeight: "1.6" }}>
-                  Your team of <Text weight="semibold">{employees!.length} members</Text> has an average skills score of{" "}
-                  <Text weight="semibold" style={{ color: summary.avgSkills >= 70 ? "#107c41" : "#f7630c" }}>{summary.avgSkills}</Text> and wellbeing at{" "}
-                  <Text weight="semibold" style={{ color: summary.avgWellbeing >= 70 ? "#107c41" : "#f7630c" }}>{summary.avgWellbeing}</Text>.
-                  {summary.atRisk.length > 0 && (
-                    <> There {summary.atRisk.length === 1 ? "is" : "are"}{" "}
-                      <Text weight="semibold" style={{ color: "#d13438" }}>{summary.atRisk.length} employee{summary.atRisk.length > 1 ? "s" : ""} at risk</Text> requiring immediate attention.
-                    </>
-                  )}
-                  {summary.topPerformers.length > 0 && (
-                    <> <Text weight="semibold" style={{ color: "#107c41" }}>{summary.topPerformers.length} top performers</Text> are driving strong delivery outcomes.</>
-                  )}
-                </Text>
-
-                <div className={styles.insightGrid}>
-                  {summary.lowSkills.length > 0 && (
-                    <div className={styles.insightItem}>
-                      <ArrowTrendingDown20Regular className={styles.insightIcon} style={{ color: "#d13438" }} />
-                      <div>
-                        <Text weight="semibold" size={300}>Skills Gap</Text>
-                        <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                          {summary.lowSkills.map(e => e.name).join(", ")} {summary.lowSkills.length === 1 ? "has" : "have"} skills below 50. Consider pairing with senior mentors.
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  {summary.highOvertime.length > 0 && (
-                    <div className={styles.insightItem}>
-                      <People20Regular className={styles.insightIcon} style={{ color: "#f7630c" }} />
-                      <div>
-                        <Text weight="semibold" size={300}>Workload Alert</Text>
-                        <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                          {summary.highOvertime.map(e => e.name).join(", ")} averaging 15+ overtime hours/week. Rebalance tasks to prevent burnout.
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  {summary.topPerformers.length > 0 && (
-                    <div className={styles.insightItem}>
-                      <Trophy20Regular className={styles.insightIcon} style={{ color: "#107c41" }} />
-                      <div>
-                        <Text weight="semibold" size={300}>Top Performers</Text>
-                        <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                          {summary.topPerformers.map(e => e.name).join(", ")} — recognize contributions and explore growth opportunities.
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  {summary.lowLearning.length > 0 && (
-                    <div className={styles.insightItem}>
-                      <Lightbulb20Regular className={styles.insightIcon} style={{ color: "#5b5fc7" }} />
-                      <div>
-                        <Text weight="semibold" size={300}>Learning Deficit</Text>
-                        <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                          {summary.lowLearning.length} team member{summary.lowLearning.length > 1 ? "s" : ""} under 8h/month on learning. Allocate dedicated development time.
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AISummaryCard
+                title="LogIQ™ Team Insights"
+                insights={
+                  <>
+                    {summary.lowSkills.length > 0 && (
+                      <InsightItem
+                        icon={<ArrowTrendingDown20Regular style={{ color: "#d13438" }} />}
+                        title="Skills Gap"
+                        description={`${summary.lowSkills.map(e => e.name).join(", ")} ${summary.lowSkills.length === 1 ? "has" : "have"} skills below 50. Consider pairing with senior mentors.`}
+                      />
+                    )}
+                    {summary.highOvertime.length > 0 && (
+                      <InsightItem
+                        icon={<People20Regular style={{ color: "#f7630c" }} />}
+                        title="Workload Alert"
+                        description={`${summary.highOvertime.map(e => e.name).join(", ")} averaging 15+ overtime hours/week. Rebalance tasks to prevent burnout.`}
+                      />
+                    )}
+                    {summary.topPerformers.length > 0 && (
+                      <InsightItem
+                        icon={<Trophy20Regular style={{ color: "#107c41" }} />}
+                        title="Top Performers"
+                        description={`${summary.topPerformers.map(e => e.name).join(", ")} — recognize contributions and explore growth opportunities.`}
+                      />
+                    )}
+                    {summary.lowLearning.length > 0 && (
+                      <InsightItem
+                        icon={<Lightbulb20Regular style={{ color: "#5b5fc7" }} />}
+                        title="Learning Deficit"
+                        description={`${summary.lowLearning.length} team member${summary.lowLearning.length > 1 ? "s" : ""} under 8h/month on learning. Allocate dedicated development time.`}
+                      />
+                    )}
+                  </>
+                }
+              >
+                Your team of <Text weight="semibold">{employees!.length} members</Text> has an average skills score of{" "}
+                <Text weight="semibold" style={{ color: summary.avgSkills >= 70 ? "#107c41" : "#f7630c" }}>{summary.avgSkills}</Text> and wellbeing at{" "}
+                <Text weight="semibold" style={{ color: summary.avgWellbeing >= 70 ? "#107c41" : "#f7630c" }}>{summary.avgWellbeing}</Text>.
+                {summary.atRisk.length > 0 && (
+                  <> There {summary.atRisk.length === 1 ? "is" : "are"}{" "}
+                    <Text weight="semibold" style={{ color: "#d13438" }}>{summary.atRisk.length} employee{summary.atRisk.length > 1 ? "s" : ""} at risk</Text> requiring immediate attention.
+                  </>
+                )}
+                {summary.topPerformers.length > 0 && (
+                  <> <Text weight="semibold" style={{ color: "#107c41" }}>{summary.topPerformers.length} top performers</Text> are driving strong delivery outcomes.</>
+                )}
+              </AISummaryCard>
             )}
 
             {activeFilter && (
@@ -266,7 +209,7 @@ const MyTeam = () => {
             {(filteredEmployees || employees!).map((emp) => {
               const isAtRisk = emp.churnRisk === "At risk";
               return (
-                <Card key={emp.id} className={`${styles.card} ${isAtRisk ? styles.cardAtRisk : ""}`} onClick={() => navigate(`/teams/1/members/${emp.id}`)}>
+                <Card key={emp.id} className={mergeClasses(styles.card, isAtRisk && styles.cardAtRisk)} onClick={() => navigate(`/dashboard/teams/1/members/${emp.id}`)}>
                   <div className={styles.header}>
                     <Persona
                       name={emp.name}
@@ -317,14 +260,14 @@ const MyTeam = () => {
 
         {activeTab === "skills" && <SkillsTab />}
         {activeTab === "delivery" && <DeliveryTab />}
-      </div>
 
-      <AIOverviewDialog
-        open={!!aiEmployee}
-        onClose={() => setAiEmployee(null)}
-        employee={aiEmployee}
-      />
-    </AppShell>
+        <AIOverviewDialog
+          open={!!aiEmployee}
+          onClose={() => setAiEmployee(null)}
+          employee={aiEmployee}
+        />
+      </div>
+    </PageContainer>
   );
 };
 

@@ -17,7 +17,7 @@ import {
   CalendarClock20Regular,
   ArrowTrending20Regular,
 } from "@fluentui/react-icons";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { PageHeader } from "../components/PageHeader";
 
 const useStyles = makeStyles({
@@ -83,7 +83,7 @@ const MemberWellbeing: React.FC = () => {
   };
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className={styles.container}>
         <PageHeader title="Well-Being" subtitle="Track your wellbeing, complete check-ins, and view personalized recommendations" />
 
@@ -184,7 +184,7 @@ const MemberWellbeing: React.FC = () => {
           </Card>
         ))}
       </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 

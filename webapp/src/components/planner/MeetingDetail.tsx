@@ -9,6 +9,7 @@ import {
   Textarea,
   Checkbox,
   Divider,
+  mergeClasses,
 } from "@fluentui/react-components";
 import {
   Dismiss20Regular,
@@ -240,7 +241,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
                   onChange={() => onToggleTopic(meeting.id, topic.id)}
                 />
                 {topicIcons[topic.icon]}
-                <span className={isDone ? styles.topicTextDone : styles.topicText}>
+                <span className={mergeClasses(styles.topicText, isDone && styles.topicTextDone)}>
                   {topic.text}
                 </span>
                 <span
@@ -361,7 +362,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
           icon={<Person20Regular />}
           size="small"
           onClick={() => {
-            if (emp) navigate(`/teams/1/members/${emp.id}`);
+            if (emp) navigate(`/dashboard/teams/1/members/${emp.id}`);
           }}
           disabled={!emp}
         >

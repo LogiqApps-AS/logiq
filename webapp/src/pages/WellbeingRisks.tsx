@@ -2,13 +2,17 @@ import { PageHeader } from "../components/PageHeader";
 import {
   Text,
   Card,
+  Button,
   makeStyles,
+  mergeClasses,
   shorthands,
   tokens,
-  Tab,
   TabList,
-  Button,
+  Tab,
+  ProgressBar,
+  Spinner,
 } from "@fluentui/react-components";
+import { AISummaryCard, InsightItem } from "../components/AISummaryCard";
 import {
   Money20Regular,
   HeartPulse20Filled,
@@ -26,7 +30,7 @@ import {
   CalendarClock20Regular,
 } from "@fluentui/react-icons";
 import { useState } from "react";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { CopilotInsightsDialog } from "../components/CopilotInsightsDialog";
 import { useNavigate } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
@@ -39,26 +43,6 @@ import {
 } from "../components/LoadingState";
 
 const useStyles = makeStyles({
-  copilotCard: {
-    padding: "20px 24px",
-    marginBottom: "20px",
-    ...shorthands.border("1px", "solid", "#d1e4ff"),
-    backgroundColor: "#f0f6ff",
-    borderRadius: "8px",
-  },
-  copilotHeader: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" },
-  copilotIcon: { color: "#0f6cbd" },
-  insightGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
-    gap: "12px", marginTop: "12px",
-  },
-  insightItem: {
-    display: "flex", alignItems: "flex-start", gap: "10px", padding: "12px",
-    backgroundColor: "#fff", borderRadius: "6px",
-    ...shorthands.border("1px", "solid", "#e8e8e8"),
-  },
-  insightIcon: { flexShrink: 0, marginTop: "2px" },
   summaryRow: {
     display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "24px",
     "@media (max-width: 640px)": { gridTemplateColumns: "1fr" },
@@ -138,8 +122,7 @@ const WellbeingRisks = () => {
   const criticalSignalCount = signals?.filter((s) => s.type === "critical").length ?? 0;
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
+    <PageContainer>
         <PageHeader title="Wellbeing & Risks" subtitle="Monitor team signals and churn exposure" />
 
         {/* Copilot Summary */}
@@ -163,52 +146,40 @@ const WellbeingRisks = () => {
         ) : empError ? (
           <ErrorState message="Failed to load employee data." onRetry={() => refetchEmp()} />
         ) : (
-          <div className={styles.copilotCard}>
-            <div className={styles.copilotHeader}>
-              <Sparkle20Filled className={styles.copilotIcon} />
-              <Text weight="semibold" size={400}>Copilot Insights</Text>
-              <span style={{ display: "inline-flex", alignItems: "center", fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", backgroundColor: "#e8ebf9", color: "#5b5fc7" }}>AI Summary</span>
-            </div>
-            <Text size={300} style={{ color: tokens.colorNeutralForeground2, lineHeight: "1.6" }}>
-              Your team has <Text weight="semibold" style={{ color: "#d13438" }}>{atRiskCount} employees at elevated churn risk</Text> with
-              a combined exposure of <Text weight="semibold" style={{ color: "#d13438" }}>${(totalChurnExposure / 1000).toFixed(0)}k</Text>.
-              {" "}The primary drivers are declining wellbeing scores and workload imbalance. Preventability sits
-              at <Text weight="semibold" style={{ color: "#107c10" }}>{avgPreventability}%</Text>, suggesting targeted interventions could significantly reduce attrition.
-            </Text>
-            <div className={styles.insightGrid}>
-              <div className={styles.insightItem}>
-                <ArrowTrendingDown20Regular className={styles.insightIcon} style={{ color: "#d13438" }} />
-                <div>
-                  <Text weight="semibold" size={300}>Wellbeing Declining</Text>
-                  <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                    2 team members dropped below threshold in the last 30 days. Sick leave is up 200% for Alex Chen.
-                  </Text>
-                </div>
-              </div>
-              <div className={styles.insightItem}>
-                <PeopleCommunity20Regular className={styles.insightIcon} style={{ color: "#f7630c" }} />
-                <div>
-                  <Text weight="semibold" size={300}>Engagement Gap</Text>
-                  <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                    Psychological safety score dropped 12% across the team. Consider addressing communication patterns.
-                  </Text>
-                </div>
-              </div>
-              <div className={styles.insightItem}>
-                <CalendarClock20Regular className={styles.insightIcon} style={{ color: "#0f6cbd" }} />
-                <div>
-                  <Text weight="semibold" size={300}>Recommended Action</Text>
-                  <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block", marginTop: "2px" }}>
-                    Schedule 1:1s with Alex Chen and David Kim this week. Focus on workload redistribution and career development.
-                  </Text>
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
-              <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }} onClick={() => setInsightsOpen(true)}>
-                See full analysis
-              </Button>
-            </div>
+          <AISummaryCard
+            title="LogIQ™ Wellbeing Insights"
+            insights={
+              <>
+                <InsightItem
+                  icon={<ArrowTrendingDown20Regular style={{ color: "#d13438" }} />}
+                  title="Wellbeing Declining"
+                  description="2 team members dropped below threshold in the last 30 days. Sick leave is up 200% for Alex Chen."
+                />
+                <InsightItem
+                  icon={<PeopleCommunity20Regular style={{ color: "#f7630c" }} />}
+                  title="Engagement Gap"
+                  description="Psychological safety score dropped 12% across the team. Consider addressing communication patterns."
+                />
+                <InsightItem
+                  icon={<CalendarClock20Regular style={{ color: "#0f6cbd" }} />}
+                  title="Recommended Action"
+                  description="Schedule 1:1s with Alex Chen and David Kim this week. Focus on workload redistribution and career development."
+                />
+              </>
+            }
+          >
+            Your team has <Text weight="semibold" style={{ color: "#d13438" }}>{atRiskCount} employees at elevated churn risk</Text> with
+            a combined exposure of <Text weight="semibold" style={{ color: "#d13438" }}>${(totalChurnExposure / 1000).toFixed(0)}k</Text>.
+            {" "}The primary drivers are declining wellbeing scores and workload imbalance. Preventability sits
+            at <Text weight="semibold" style={{ color: "#107c10" }}>{avgPreventability}%</Text>, suggesting targeted interventions could significantly reduce attrition.
+          </AISummaryCard>
+        )}
+
+        {activeTab === "signals" && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
+            <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }} onClick={() => setInsightsOpen(true)}>
+              See full analysis
+            </Button>
           </div>
         )}
 
@@ -219,7 +190,7 @@ const WellbeingRisks = () => {
           totalChurnExposure={totalChurnExposure}
           avgPreventability={avgPreventability}
           onNavigateToPrep={() => { setInsightsOpen(false); navigate("/prep"); }}
-          onNavigateToProfile={(id) => { setInsightsOpen(false); navigate(`/teams/1/members/${id}`); }}
+          onNavigateToProfile={(id) => { setInsightsOpen(false); navigate(`/dashboard/teams/1/members/${id}`); }}
         />
 
         <TabList selectedValue={activeTab} onTabSelect={(_, d) => setActiveTab(d.value as string)} style={{ marginBottom: "20px" }}>
@@ -312,7 +283,7 @@ const WellbeingRisks = () => {
                 signal.type === "critical" ? styles.signalCritical :
                 signal.type === "warning" ? styles.signalWarning : styles.signalInfo;
               return (
-                <Card key={signal.id} className={`${styles.signalCard} ${borderClass}`}>
+                <Card key={signal.id} className={mergeClasses(styles.signalCard, borderClass)}>
                   <div className={styles.signalTitleRow}>
                     <span style={{ color: typeColors[signal.type] }}>{iconMap[signal.icon] || <Warning20Filled />}</span>
                     <Text weight="bold" size={400}>{signal.title}</Text>
@@ -332,8 +303,7 @@ const WellbeingRisks = () => {
             })}
           </div>
         )}
-      </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 

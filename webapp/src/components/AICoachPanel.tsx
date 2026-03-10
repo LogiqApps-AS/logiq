@@ -22,6 +22,8 @@ import {
   ArrowTrending20Regular,
 } from "@fluentui/react-icons";
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { apiClient } from "@/lib/api";
 import type { ChatSuggestion } from "@/lib/api";
 import { useMemberDashboard } from "@/hooks/useApiData";
@@ -146,7 +148,49 @@ const useStyles = makeStyles({
     maxWidth: "90%",
     lineHeight: "1.5",
     fontSize: "13px",
-    whiteSpace: "pre-wrap",
+    "& p": {
+      margin: "0 0 8px 0",
+      ":last-child": {
+        marginBottom: 0,
+      },
+    },
+    "& ul, & ol": {
+      margin: "0 0 8px 0",
+      paddingLeft: "20px",
+    },
+    "& li": {
+      marginBottom: "4px",
+    },
+    "& code": {
+      backgroundColor: "#f5f5f5",
+      padding: "2px 6px",
+      borderRadius: "4px",
+      fontSize: "12px",
+      fontFamily: "monospace",
+    },
+    "& pre": {
+      backgroundColor: "#f5f5f5",
+      padding: "12px",
+      borderRadius: "6px",
+      overflow: "auto",
+      margin: "8px 0",
+    },
+    "& pre code": {
+      backgroundColor: "transparent",
+      padding: 0,
+    },
+    "& strong": {
+      fontWeight: 600,
+    },
+    "& em": {
+      fontStyle: "italic",
+    },
+    "& blockquote": {
+      borderLeft: "3px solid #e0e0e0",
+      paddingLeft: "12px",
+      margin: "8px 0",
+      color: tokens.colorNeutralForeground3,
+    },
   },
   messageBubbleUser: {
     borderRadius: "12px",
@@ -321,7 +365,9 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ open, onClose, membe
           ) : (
             <div key={msg.id} className={styles.messageBot}>
               <Avatar name="C" size={28} style={{ backgroundColor: "#107c10", color: "#fff" }} />
-              <div className={styles.messageBubble}>{msg.text}</div>
+              <div className={styles.messageBubble}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+              </div>
             </div>
           )
         )}

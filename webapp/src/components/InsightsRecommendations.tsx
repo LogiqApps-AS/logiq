@@ -5,7 +5,7 @@ import {
   Text,
   Card,
   Button,
-  Divider,
+  mergeClasses,
 } from "@fluentui/react-components";
 import {
   Sparkle20Filled,
@@ -191,7 +191,7 @@ export const InsightsRecommendations: React.FC = () => {
 
       <div className={styles.insightsList}>
         {insights.map((insight) => (
-          <Card key={insight.id} className={`${styles.insightCard} ${severityClass(insight.severity)}`}>
+          <Card key={insight.id} className={mergeClasses(styles.insightCard, severityClass(insight.severity))}>
             <div className={styles.insightHeader}>
               <span className={styles.insightNumber}>{insight.id}</span>
               {insight.icon}
@@ -201,13 +201,13 @@ export const InsightsRecommendations: React.FC = () => {
               {insight.description}
             </Text>
             <div className={styles.actionsRow}>
-              <div className={`${styles.actionBox} ${styles.immediateBox}`}>
+              <div className={mergeClasses(styles.actionBox, styles.immediateBox)}>
                 <div>
                   <span className={styles.actionLabel} style={{ color: "#d13438" }}>⚡ Immediate</span>
                   <Text size={200} style={{ lineHeight: "1.5" }}>{insight.immediateAction}</Text>
                 </div>
               </div>
-              <div className={`${styles.actionBox} ${styles.longTermBox}`}>
+              <div className={mergeClasses(styles.actionBox, styles.longTermBox)}>
                 <div>
                   <span className={styles.actionLabel} style={{ color: "#5b5fc7" }}>🎯 Long-term</span>
                   <Text size={200} style={{ lineHeight: "1.5" }}>{insight.longTermAction}</Text>

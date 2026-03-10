@@ -2,7 +2,7 @@
  * Reusable loading and error state components.
  * Provides skeleton loaders for various dashboard patterns and a retry-able error card.
  */
-import { makeStyles, tokens, Text, Button, Card } from "@fluentui/react-components";
+import { makeStyles, mergeClasses, tokens, Text, Button, Card } from "@fluentui/react-components";
 import { ArrowClockwise20Regular, ErrorCircle20Regular } from "@fluentui/react-icons";
 
 const useStyles = makeStyles({
@@ -87,7 +87,7 @@ export const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
   const styles = useStyles();
   return (
     <div
-      className={`${styles.skeleton} ${styles.shimmer}`}
+      className={mergeClasses(styles.skeleton, styles.shimmer)}
       style={{ width, height, borderRadius, ...style }}
     />
   );

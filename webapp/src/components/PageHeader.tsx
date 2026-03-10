@@ -9,7 +9,7 @@ interface PageHeaderProps {
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions }) => (
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
     <div>
       <Text size={700} weight="bold" as="h1" style={{ margin: 0 }}>
         {title}
@@ -20,6 +20,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions
         </Text>
       )}
     </div>
-    {actions && <div>{actions}</div>}
+    {actions && <div style={{ marginLeft: "16px" }}>{actions}</div>}
   </div>
 );

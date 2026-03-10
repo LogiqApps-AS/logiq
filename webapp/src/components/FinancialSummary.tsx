@@ -81,7 +81,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data }) => {
           ${(data.churnExposure / 1000).toFixed(0)}k
         </span>
       </Card>
-      <Card className={styles.card} onClick={() => navigate("/wellbeing")}>
+      <Card className={styles.card} onClick={() => navigate("/dashboard/wellbeing")}>
         <div className={styles.label}>
           <Warning20Regular style={{ color: tokens.colorNeutralForeground3 }} />
           <Text size={300} style={{ color: tokens.colorNeutralForeground3 }}>

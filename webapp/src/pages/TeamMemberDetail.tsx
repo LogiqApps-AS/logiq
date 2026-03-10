@@ -1,13 +1,15 @@
 import {
-  makeStyles,
-  shorthands,
-  tokens,
   Text,
+  Card,
   Persona,
   Button,
-  Tab,
-  TabList,
   ProgressBar,
+  makeStyles,
+  mergeClasses,
+  shorthands,
+  tokens,
+  TabList,
+  Tab,
   Spinner,
 } from "@fluentui/react-components";
 import {
@@ -29,7 +31,7 @@ import {
 } from "@fluentui/react-icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { useEmployee, useMemberDetail } from "../hooks/useApiData";
 import { EmptyState } from "../components/EmptyState";
 
@@ -165,11 +167,11 @@ const useStyles = makeStyles({
   },
   signalCritical: {
     backgroundColor: "#fff0f0",
-    borderColor: "#ffd7d7",
+    ...shorthands.borderColor("#ffd7d7"),
   },
   signalWarning: {
     backgroundColor: "#fff9f0",
-    borderColor: "#ffe0b2",
+    ...shorthands.borderColor("#ffe0b2"),
   },
   roleTimeline: {
     display: "flex",
@@ -222,29 +224,28 @@ const TeamMemberDetail = () => {
 
   if (empLoading || detailLoading) {
     return (
-      <AppShell>
+      <PageContainer>
         <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
           <Spinner size="large" label="Loading member profile..." />
         </div>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   if (!emp || !detail) {
     return (
-      <AppShell>
+      <PageContainer>
         <Text size={500}>Employee not found</Text>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   const scores = [emp.wellbeing.score, emp.skills.score, emp.motivation.score, emp.delivery.score, emp.churnPercent + "%"];
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
+    <PageContainer>
         {/* Back link */}
-        <button className={styles.backLink} onClick={() => navigate("/team")}>
+        <button className={styles.backLink} onClick={() => navigate("/dashboard/team")}>
           <ArrowLeft20Regular /> Back to Team
         </button>
 
@@ -480,7 +481,7 @@ const TeamMemberDetail = () => {
             detail.signals.length > 0 ? detail.signals.map((s) => (
             <div
               key={s.id}
-              className={`${styles.signalCard} ${s.severity === "critical" ? styles.signalCritical : styles.signalWarning}`}
+              className={mergeClasses(styles.signalCard, s.severity === "critical" ? styles.signalCritical : styles.signalWarning)}
             >
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -539,8 +540,7 @@ const TeamMemberDetail = () => {
             </>
           )}
         </div>
-      </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 

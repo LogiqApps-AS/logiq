@@ -2,7 +2,9 @@ import { PageHeader } from "../components/PageHeader";
 import {
   Text,
   Card,
+  Button,
   makeStyles,
+  mergeClasses,
   tokens,
   Spinner,
 } from "@fluentui/react-components";
@@ -12,7 +14,7 @@ import {
   Info20Regular,
 } from "@fluentui/react-icons";
 import { useState } from "react";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { useMemberSignals } from "../hooks/useApiData";
 
 const useStyles = makeStyles({
@@ -45,21 +47,20 @@ const MemberSignals: React.FC = () => {
 
   if (isLoading) {
     return (
-      <AppShell>
+      <PageContainer>
         <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
           <Spinner label="Loading signals..." />
         </div>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+    <PageContainer maxWidth="800px">
         <PageHeader title="Your Signals" subtitle={`${unreadCount} unread signal${unreadCount !== 1 ? "s" : ""} · Personalized insights and alerts`} />
         <div className={styles.filterRow}>
           {filters.map((f) => (
-            <button key={f} className={`${styles.chip} ${filter === f ? styles.chipActive : ""}`} onClick={() => setFilter(f)}>{f}</button>
+            <button key={f} className={mergeClasses(styles.chip, filter === f && styles.chipActive)} onClick={() => setFilter(f)}>{f}</button>
           ))}
         </div>
         {filtered.map((signal) => {
@@ -82,8 +83,7 @@ const MemberSignals: React.FC = () => {
             <Text size={300}>No signals in this category</Text>
           </div>
         )}
-      </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 

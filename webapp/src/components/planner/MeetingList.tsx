@@ -7,6 +7,7 @@ import {
   Button,
   Tab,
   TabList,
+  mergeClasses,
 } from "@fluentui/react-components";
 import {
   CalendarLtr16Regular,
@@ -155,7 +156,7 @@ export const MeetingList: React.FC<MeetingListProps> = ({
           key={m.id}
           role="button"
           tabIndex={0}
-          className={`${styles.card} ${selectedId === m.id ? styles.cardSelected : ""}`}
+          className={mergeClasses(styles.card, selectedId === m.id && styles.cardSelected)}
           onClick={() => onSelect(m.id)}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(m.id); } }}
         >

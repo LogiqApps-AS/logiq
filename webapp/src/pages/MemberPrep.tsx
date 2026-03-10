@@ -1,7 +1,7 @@
 import { PageHeader } from "../components/PageHeader";
 import { Text, Card, makeStyles, tokens, Spinner } from "@fluentui/react-components";
 import { TextBulletListSquare20Regular, Lightbulb20Regular, Trophy20Regular, QuestionCircle20Regular } from "@fluentui/react-icons";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { useMemberDashboard } from "../hooks/useApiData";
 
 const useStyles = makeStyles({
@@ -19,11 +19,11 @@ const MemberPrep: React.FC = () => {
 
   if (isLoading) {
     return (
-      <AppShell>
+      <PageContainer>
         <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
           <Spinner label="Loading prep..." />
         </div>
-      </AppShell>
+      </PageContainer>
     );
   }
 
@@ -35,8 +35,7 @@ const MemberPrep: React.FC = () => {
   ];
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", width: "100%" }}>
+    <PageContainer maxWidth="1000px">
         <PageHeader title="1:1 Prep Assistant" subtitle="Prepare for your next meeting with your team lead" />
         <div className={styles.grid}>
           {sections.map((section) => (
@@ -54,8 +53,7 @@ const MemberPrep: React.FC = () => {
             </Card>
           ))}
         </div>
-      </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 
