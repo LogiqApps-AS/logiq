@@ -1,17 +1,17 @@
 import {
   Text,
   Button,
+  Card,
   makeStyles,
-  Label,
+  tokens,
 } from "@fluentui/react-components";
 import {
-  BrainCircuit24Regular,
-  People20Regular,
-  Person20Regular,
-  ArrowRight20Regular,
+  Person20Filled,
+  People20Filled,
+  ArrowLeft20Regular,
 } from "@fluentui/react-icons";
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Logo } from "../components/Logo";
+import { useNavigate } from "react-router-dom";
 import { useRole } from "../contexts/RoleContext";
 
 const useStyles = makeStyles({
@@ -22,8 +22,8 @@ const useStyles = makeStyles({
     justifyContent: "center",
     background: "linear-gradient(135deg, #f0f6ff 0%, #e8eef7 50%, #fafafa 100%)",
   },
-  card: {
-    width: "440px",
+  container: {
+    width: "500px",
     backgroundColor: "#fff",
     borderRadius: "12px",
     padding: "40px 36px",
@@ -35,32 +35,26 @@ const useStyles = makeStyles({
     flexDirection: "column",
     alignItems: "center",
     marginBottom: "32px",
-  },
-  brandIcon: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px",
-    backgroundColor: "#0f6cbd",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#fff",
-    marginBottom: "12px",
+    gap: "12px",
   },
   roleCard: {
+    padding: "24px",
+    marginBottom: "16px",
+    cursor: "pointer",
+    border: "2px solid transparent",
+    transition: "all 0.2s ease",
+    ":hover": {
+      borderColor: "#5b5fc7",
+      backgroundColor: "#fafaff",
+      transform: "translateY(-2px)",
+      boxShadow: "0 4px 16px rgba(91,95,199,0.15)",
+    },
+  },
+  roleHeader: {
     display: "flex",
     alignItems: "center",
-    gap: "14px",
-    padding: "16px",
-    borderRadius: "8px",
-    border: "1px solid #e0e0e0",
-    cursor: "pointer",
-    transitionProperty: "all",
-    transitionDuration: "0.15s",
-  },
-  roleCardSelected: {
-    border: "2px solid #0f6cbd",
-    backgroundColor: "#f0f6ff",
+    gap: "12px",
+    marginBottom: "12px",
   },
   roleIcon: {
     width: "40px",
@@ -69,106 +63,123 @@ const useStyles = makeStyles({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
+    fontSize: "20px",
   },
-  footer: {
-    textAlign: "center",
-    marginTop: "24px",
+  leadIcon: {
+    backgroundColor: "#e8ebf9",
+    color: "#5b5fc7",
+  },
+  memberIcon: {
+    backgroundColor: "#e0f2fe",
+    color: "#0f6cbd",
+  },
+  featureList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    marginTop: "12px",
+  },
+  feature: {
+    fontSize: "13px",
+    color: tokens.colorNeutralForeground3,
+    paddingLeft: "16px",
+    position: "relative",
+    "&::before": {
+      content: '"•"',
+      position: "absolute",
+      left: "0",
+      color: tokens.colorNeutralForeground3,
+    },
   },
 });
 
-const roles = [
-  {
-    key: "team_lead",
-    label: "Team Lead",
-    desc: "View team KPIs, signals, employee scores, and financial summary.",
-    icon: <People20Regular />,
-    color: "#0f6cbd",
-    bg: "#e8f0fe",
-  },
-  {
-    key: "team_member",
-    label: "Team Member",
-    desc: "View personal KPIs, skills, delivery stats, and well-being insights.",
-    icon: <Person20Regular />,
-    color: "#107c41",
-    bg: "#e6f4ea",
-  },
-];
 
 const DemoMode = () => {
   const styles = useStyles();
   const navigate = useNavigate();
   const { setRole } = useRole();
-  const [selected, setSelected] = useState("team_lead");
 
-  const handleLaunch = () => {
-    setRole(selected === "team_member" ? "member" : "lead");
+  const handleRoleSelect = (role: "lead" | "member") => {
+    setRole(role);
     navigate("/dashboard");
   };
 
   return (
     <div className={styles.root}>
-        <div className={styles.card}>
-          <div className={styles.brand}>
-            <div className={styles.brandIcon}>
-              <BrainCircuit24Regular />
-            </div>
-            <Text weight="bold" size={600}>Demo Mode</Text>
-            <Text size={300} style={{ color: "#616161", marginTop: "4px" }}>
-              Explore LogIQ with sample data — no account needed
-            </Text>
-          </div>
-
-          <Label style={{ marginBottom: "12px", display: "block" }} weight="semibold">
-            Select your role
-          </Label>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "28px" }}>
-            {roles.map((role) => (
-              <div
-                key={role.key}
-                role="button"
-                tabIndex={0}
-                className={`${styles.roleCard} ${selected === role.key ? styles.roleCardSelected : ""}`}
-                onClick={() => setSelected(role.key)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(role.key); } }}
-              >
-                <div className={styles.roleIcon} style={{ backgroundColor: role.bg, color: role.color }}>
-                  {role.icon}
-                </div>
-                <div>
-                  <Text weight="semibold" size={400} block>{role.label}</Text>
-                  <Text size={200} style={{ color: "#616161" }}>{role.desc}</Text>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Button
-            appearance="primary"
-            size="large"
-            style={{ width: "100%" }}
-            icon={<ArrowRight20Regular />}
-            iconPosition="after"
-            onClick={handleLaunch}
-          >
-            Launch Demo
-          </Button>
-
-          <div className={styles.footer}>
-            <Text size={300} style={{ color: "#616161" }}>
-              Want full access?{" "}
-              <Link to="/signup" style={{ color: "#0f6cbd", textDecoration: "none" }}>
-                Create an account
-              </Link>
-              {" · "}
-              <Link to="/signin" style={{ color: "#0f6cbd", textDecoration: "none" }}>
-                Sign in
-              </Link>
-            </Text>
-          </div>
+      <div className={styles.container}>
+        <Button
+          appearance="transparent"
+          icon={<ArrowLeft20Regular />}
+          onClick={() => navigate("/")}
+          style={{ alignSelf: "flex-start", marginBottom: "8px", marginLeft: "-8px", color: "#616161" }}
+        >
+          Back to home
+        </Button>
+        
+        <div className={styles.brand}>
+          <Logo size={48} iconSize={24} />
+          <Text weight="bold" size={600}>Choose Your Demo Role</Text>
+          <Text size={300} style={{ color: "#616161", marginTop: "4px", textAlign: "center" }}>
+            Select a role to explore LogIQ's features
+          </Text>
         </div>
+
+        <Card
+          className={styles.roleCard}
+          onClick={() => handleRoleSelect("lead")}
+        >
+          <div className={styles.roleHeader}>
+            <div className={`${styles.roleIcon} ${styles.leadIcon}`}>
+              <People20Filled />
+            </div>
+            <div>
+              <Text weight="semibold" size={400}>Team Lead</Text>
+              <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block" }}>
+                Magnus Lindqvist
+              </Text>
+            </div>
+          </div>
+          <Text size={300} style={{ color: tokens.colorNeutralForeground2 }}>
+            Manage your team, monitor wellbeing, and access strategic insights
+          </Text>
+          <div className={styles.featureList}>
+            <div className={styles.feature}>Team Dashboard & Analytics</div>
+            <div className={styles.feature}>Wellbeing & Risk Monitoring</div>
+            <div className={styles.feature}>1:1 Planning & Prep</div>
+            <div className={styles.feature}>Team Member Profiles</div>
+          </div>
+        </Card>
+
+        <Card
+          className={styles.roleCard}
+          onClick={() => handleRoleSelect("member")}
+        >
+          <div className={styles.roleHeader}>
+            <div className={`${styles.roleIcon} ${styles.memberIcon}`}>
+              <Person20Filled />
+            </div>
+            <div>
+              <Text weight="semibold" size={400}>Team Member</Text>
+              <Text size={200} style={{ color: tokens.colorNeutralForeground3, display: "block" }}>
+                Alex Chen
+              </Text>
+            </div>
+          </div>
+          <Text size={300} style={{ color: tokens.colorNeutralForeground2 }}>
+            Track your growth, receive personalized insights, and manage development
+          </Text>
+          <div className={styles.featureList}>
+            <div className={styles.feature}>Personal Dashboard & Signals</div>
+            <div className={styles.feature}>Development Plan & Goals</div>
+            <div className={styles.feature}>360° Feedback</div>
+            <div className={styles.feature}>AI Coach & Recommendations</div>
+          </div>
+        </Card>
+
+        <Text size={200} style={{ color: tokens.colorNeutralForeground3, textAlign: "center", marginTop: "24px" }}>
+          Demo mode includes full access to all features with sample data
+        </Text>
+      </div>
     </div>
   );
 };

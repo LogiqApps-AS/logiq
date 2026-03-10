@@ -9,7 +9,6 @@ import {
   tokens,
 } from "@fluentui/react-components";
 import {
-  BrainCircuit24Regular,
   Person20Regular,
   LockClosed20Regular,
   Rocket20Regular,
@@ -18,6 +17,7 @@ import {
   ShieldCheckmark20Regular,
   ArrowLeft20Regular,
 } from "@fluentui/react-icons";
+import { Logo } from "../components/Logo";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRole } from "../contexts/RoleContext";
@@ -43,17 +43,7 @@ const useStyles = makeStyles({
     flexDirection: "column",
     alignItems: "center",
     marginBottom: "32px",
-  },
-  brandIcon: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px",
-    backgroundColor: "#0f6cbd",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#fff",
-    marginBottom: "12px",
+    gap: "12px",
   },
   field: {
     display: "flex",
@@ -107,9 +97,7 @@ const SignIn = () => {
             Back to home
           </Button>
           <div className={styles.brand}>
-            <div className={styles.brandIcon}>
-              <BrainCircuit24Regular />
-            </div>
+            <Logo size={48} iconSize={24} />
             <Text weight="bold" size={600}>Sign in to LogIQ</Text>
             <Text size={200} style={{ color: "#616161", marginTop: "4px" }}>
               People Partner Intelligence
@@ -123,7 +111,7 @@ const SignIn = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@company.com"
+                placeholder="name@logiq.com"
                 contentBefore={<Person20Regular />}
                 value={email}
                 onChange={(_, d) => setEmail(d.value)}
