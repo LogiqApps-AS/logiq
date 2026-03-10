@@ -12,7 +12,6 @@ import {
   DialogActions,
   Input,
   Avatar,
-  Persona,
 } from "@fluentui/react-components";
 import { Add20Regular, Dismiss20Regular } from "@fluentui/react-icons";
 import { useState, useMemo, useCallback, useReducer } from "react";
@@ -21,10 +20,9 @@ import { PlannerKPICards } from "../components/planner/PlannerKPICards";
 import { WeekCalendarStrip } from "../components/planner/WeekCalendarStrip";
 import { MeetingList } from "../components/planner/MeetingList";
 import { MeetingDetail } from "../components/planner/MeetingDetail";
-import { useMeetings, usePastMeetings, useDeferredTopics } from "../hooks/useApiData";
+import { useMeetings, usePastMeetings, useDeferredTopics, useEmployees } from "../hooks/useApiData";
 import { ErrorState, SkeletonBlock } from "../components/LoadingState";
-import { employees } from "../data/sampleData";
-import type { Meeting, MeetingTopic, FollowUpAction } from "../data/meetingsData";
+import type { Meeting, MeetingTopic, FollowUpAction } from "@/lib/api";
 import { format } from "date-fns";
 
 const useStyles = makeStyles({
@@ -118,13 +116,12 @@ const OneOnOnePlanner = () => {
   const { data: meetingsData, isLoading: meetLoading, isError: meetError, refetch: refetchMeet } = useMeetings();
   const { data: pastMeetingsData, isLoading: pastLoading } = usePastMeetings();
   const { data: deferredTopicsData } = useDeferredTopics();
+  const { data: employeesData = [] } = useEmployees();
 
-  // Local mutable state for meetings
   const [localUpcoming, setLocalUpcoming] = useState<Meeting[] | null>(null);
   const [localPast, setLocalPast] = useState<Meeting[] | null>(null);
   const [localDeferred, setLocalDeferred] = useState<{ id: string; text: string; person: string }[] | null>(null);
 
-  // UI state managed with useReducer
   const [uiState, dispatchUI] = useReducer(uiReducer, {
     selectedId: null,
     selectedDate: null,
@@ -137,7 +134,6 @@ const OneOnOnePlanner = () => {
   const past = localPast ?? pastMeetingsData ?? [];
   const deferred = localDeferred ?? deferredTopicsData ?? [];
 
-  // Initialize local state when API data loads
   if (meetingsData && !localUpcoming) setLocalUpcoming([...meetingsData]);
   if (pastMeetingsData && !localPast) setLocalPast([...pastMeetingsData]);
   if (deferredTopicsData && !localDeferred) setLocalDeferred([...deferredTopicsData]);
@@ -146,8 +142,6 @@ const OneOnOnePlanner = () => {
   const effectiveSelectedId = uiState.selectedId ?? upcoming[0]?.id ?? null;
   const selectedMeeting = allMeetings.find((m) => m.id === effectiveSelectedId) || null;
   const isLoading = meetLoading || pastLoading;
-
-  // --- Meeting mutations ---
 
   const updateMeeting = useCallback((id: string, updater: (m: Meeting) => Meeting) => {
     setLocalUpcoming((prev) => prev?.map((m) => m.id === id ? updater(m) : m) ?? null);
@@ -240,7 +234,7 @@ const OneOnOnePlanner = () => {
   }, []);
 
   const handleSchedule = () => {
-    const emp = employees.find(
+    const emp = employeesData.find(
       (e) => e.name.toLowerCase().includes(uiState.newMeetingEmployee.toLowerCase())
     );
     if (!emp || !uiState.newMeetingDate) return;
@@ -322,7 +316,6 @@ const OneOnOnePlanner = () => {
         }
       </div>
 
-      {/* Schedule 1:1 Dialog */}
       <Dialog open={uiState.showNewDialog} onOpenChange={(_, d) => { if (!d.open) dispatchUI({ type: 'SET_SHOW_NEW_DIALOG', show: false }); }}>
         <DialogSurface style={{ maxWidth: "440px", borderRadius: "12px" }}>
           <DialogBody>
@@ -342,7 +335,7 @@ const OneOnOnePlanner = () => {
                 />
                 {uiState.newMeetingEmployee.length > 1 && (
                   <div style={{ border: "1px solid #e0e0e0", borderRadius: "6px", marginTop: "4px", maxHeight: "160px", overflow: "auto" }}>
-                    {employees
+                    {employeesData
                       .filter((e) => e.name.toLowerCase().includes(uiState.newMeetingEmployee.toLowerCase()))
                       .map((e) => (
                         <div
@@ -379,7 +372,7 @@ const OneOnOnePlanner = () => {
               <Button appearance="secondary" onClick={() => dispatchUI({ type: 'SET_SHOW_NEW_DIALOG', show: false })}>Cancel</Button>
               <Button
                 appearance="primary"
-                disabled={!employees.some((e) => e.name.toLowerCase() === uiState.newMeetingEmployee.toLowerCase()) || !uiState.newMeetingDate}
+                disabled={!employeesData.some((e) => e.name.toLowerCase() === uiState.newMeetingEmployee.toLowerCase()) || !uiState.newMeetingDate}
                 onClick={handleSchedule}
               >
                 Schedule

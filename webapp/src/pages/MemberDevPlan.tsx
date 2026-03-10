@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { Sparkle20Filled, Lightbulb16Filled, Info16Regular, Edit16Regular, CheckmarkCircle16Regular, Add16Regular } from "@fluentui/react-icons";
 import {
@@ -21,13 +21,14 @@ import {
   Slider,
   Dropdown,
   Option,
+  Spinner,
 } from "@fluentui/react-components";
 import { ArrowTrending20Regular, ArrowTrendingDown20Regular } from "@fluentui/react-icons";
 import { AppShell } from "../components/AppShell";
-import { devPlanGoals as initialGoals, learningItems as initialLearning, memberSkills } from "../data/memberDashboardData";
-import type { DevGoal, LearningItem } from "../data/memberDashboardData";
+import type { DevGoal, LearningItem, MemberSkill } from "@/lib/api";
 import LearningCardList from "../components/LearningCardList";
 import { toast } from "sonner";
+import { useMemberDashboard } from "../hooks/useApiData";
 
 const useStyles = makeStyles({
   goalCard: { padding: "14px 18px", marginBottom: "8px" },
@@ -69,80 +70,74 @@ const statusColors: Record<string, { bg: string; color: string }> = {
   behind: { bg: "#fde7e9", color: "#d13438" },
   completed: { bg: "#e8ebf9", color: "#5b5fc7" },
 };
-const priorityColors: Record<string, { color: string; bg: string }> = {
-  HIGH: { color: "#d13438", bg: "#fde7e9" },
-  MEDIUM: { color: "#f7630c", bg: "#fff4ce" },
-  LOW: { color: "#107c41", bg: "#dff6dd" },
-};
+
 const getBarColor = (v: number) => (v >= 70 ? "#5b5fc7" : v >= 50 ? "#f7630c" : "#d13438");
 
-const skillRecommendations: Record<string, { training: string; provider: string; duration: string; reason: string }[]> = {
-  "TypeScript": [
-    { training: "Advanced TypeScript Patterns", provider: "Pluralsight", duration: "12h", reason: "Solidify generics and type-level programming" },
-  ],
-  "React": [
-    { training: "React Performance Optimization", provider: "Frontend Masters", duration: "8h", reason: "Improve rendering efficiency in large apps" },
-  ],
+const skillRecommendations: Record<string, { training: string; provider: string; duration: string }[]> = {
+  "TypeScript": [{ training: "Advanced TypeScript Patterns", provider: "Pluralsight", duration: "12h" }],
+  "React": [{ training: "React Performance Optimization", provider: "Frontend Masters", duration: "8h" }],
   "Cloud Architecture": [
-    { training: "AWS Solutions Architect Associate", provider: "A Cloud Guru", duration: "40h", reason: "Critical skill gap — aligns with IDP goal" },
-    { training: "Cloud Design Patterns", provider: "Microsoft Learn", duration: "6h", reason: "Learn scalable architecture fundamentals" },
+    { training: "AWS Solutions Architect Associate", provider: "A Cloud Guru", duration: "40h" },
+    { training: "Cloud Design Patterns", provider: "Microsoft Learn", duration: "6h" },
   ],
   "System Design": [
-    { training: "System Design Interview Prep", provider: "Educative", duration: "20h", reason: "Behind on IDP goal — structured learning needed" },
-    { training: "Distributed Systems Fundamentals", provider: "Coursera", duration: "15h", reason: "Build foundation for architecture reviews" },
+    { training: "System Design Interview Prep", provider: "Educative", duration: "20h" },
+    { training: "Distributed Systems Fundamentals", provider: "Coursera", duration: "15h" },
   ],
-  "Node.js": [
-    { training: "Node.js Advanced Concepts", provider: "Udemy", duration: "10h", reason: "Deepen backend proficiency" },
-  ],
-  "Testing": [
-    { training: "Test-Driven Development Mastery", provider: "Pluralsight", duration: "8h", reason: "Improve test coverage and methodology" },
-  ],
+  "Node.js": [{ training: "Node.js Advanced Concepts", provider: "Udemy", duration: "10h" }],
+  "Testing": [{ training: "Test-Driven Development Mastery", provider: "Pluralsight", duration: "8h" }],
   "CI/CD": [
-    { training: "GitHub Actions & DevOps Pipelines", provider: "LinkedIn Learning", duration: "6h", reason: "Skill trending down — needs reinforcement" },
-    { training: "Infrastructure as Code with Terraform", provider: "HashiCorp Learn", duration: "12h", reason: "Complement CI/CD with IaC skills" },
+    { training: "GitHub Actions & DevOps Pipelines", provider: "LinkedIn Learning", duration: "6h" },
+    { training: "Infrastructure as Code with Terraform", provider: "HashiCorp Learn", duration: "12h" },
   ],
   "Leadership": [
-    { training: "Leading Without Authority", provider: "Coursera", duration: "8h", reason: "Supports leadership readiness IDP goal" },
-    { training: "Effective 1:1 Conversations", provider: "Internal Workshop", duration: "2h", reason: "Build mentoring skills for team growth" },
+    { training: "Leading Without Authority", provider: "Coursera", duration: "8h" },
+    { training: "Effective 1:1 Conversations", provider: "Internal Workshop", duration: "2h" },
   ],
 };
 
 type State = {
   goals: DevGoal[];
   learning: LearningItem[];
+  skills: MemberSkill[];
   enrolledTrainings: Set<string>;
   editGoal: DevGoal | null;
   editProgress: number;
   editStatus: string;
+  initialized: boolean;
 };
 
 type Action =
-  | { type: 'UPDATE_GOALS'; goals: DevGoal[] }
-  | { type: 'SET_LEARNING'; learning: LearningItem[] }
-  | { type: 'ADD_ENROLLED_TRAINING'; training: string }
-  | { type: 'OPEN_EDIT_DIALOG'; goal: DevGoal }
-  | { type: 'SET_EDIT_PROGRESS'; progress: number }
-  | { type: 'SET_EDIT_STATUS'; status: string }
-  | { type: 'CLOSE_EDIT_DIALOG' };
+  | { type: "INIT"; goals: DevGoal[]; learning: LearningItem[]; skills: MemberSkill[] }
+  | { type: "UPDATE_GOALS"; goals: DevGoal[] }
+  | { type: "SET_LEARNING"; learning: LearningItem[] }
+  | { type: "ADD_ENROLLED_TRAINING"; training: string }
+  | { type: "OPEN_EDIT_DIALOG"; goal: DevGoal }
+  | { type: "SET_EDIT_PROGRESS"; progress: number }
+  | { type: "SET_EDIT_STATUS"; status: string }
+  | { type: "CLOSE_EDIT_DIALOG" };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-    case 'UPDATE_GOALS':
+    case "INIT":
+      if (state.initialized) return state;
+      return { ...state, goals: action.goals, learning: action.learning, skills: action.skills, initialized: true };
+    case "UPDATE_GOALS":
       return { ...state, goals: action.goals };
-    case 'SET_LEARNING':
+    case "SET_LEARNING":
       return { ...state, learning: action.learning };
-    case 'ADD_ENROLLED_TRAINING': {
+    case "ADD_ENROLLED_TRAINING": {
       const next = new Set(state.enrolledTrainings);
       next.add(action.training);
       return { ...state, enrolledTrainings: next };
     }
-    case 'OPEN_EDIT_DIALOG':
+    case "OPEN_EDIT_DIALOG":
       return { ...state, editGoal: action.goal, editProgress: action.goal.progress, editStatus: action.goal.status };
-    case 'SET_EDIT_PROGRESS':
+    case "SET_EDIT_PROGRESS":
       return { ...state, editProgress: action.progress };
-    case 'SET_EDIT_STATUS':
+    case "SET_EDIT_STATUS":
       return { ...state, editStatus: action.status };
-    case 'CLOSE_EDIT_DIALOG':
+    case "CLOSE_EDIT_DIALOG":
       return { ...state, editGoal: null };
     default:
       return state;
@@ -151,57 +146,62 @@ const reducer = (state: State, action: Action): State => {
 
 const MemberDevPlan: React.FC = () => {
   const styles = useStyles();
-  
+  const { data: dashboard, isLoading } = useMemberDashboard("1");
+
   const [state, dispatch] = useReducer(reducer, {
-    goals: initialGoals,
-    learning: initialLearning,
+    goals: [],
+    learning: [],
+    skills: [],
     enrolledTrainings: new Set<string>(),
     editGoal: null,
     editProgress: 0,
     editStatus: "on-track",
+    initialized: false,
   });
 
+  useEffect(() => {
+    if (dashboard && !state.initialized) {
+      dispatch({ type: "INIT", goals: dashboard.devGoals, learning: dashboard.learningItems, skills: dashboard.skills });
+    }
+  }, [dashboard, state.initialized]);
+
   const handleUpdateProgress = useCallback((goalId: string, delta: number) => {
-    dispatch({ 
-      type: 'UPDATE_GOALS', 
-      goals: state.goals.map(g => {
-      if (g.id !== goalId) return g;
-      const newProgress = Math.min(100, Math.max(0, g.progress + delta));
-      const newStatus = newProgress >= 100 ? "completed" as const : g.status;
-      return { ...g, progress: newProgress, status: newStatus };
-    })
+    dispatch({
+      type: "UPDATE_GOALS",
+      goals: state.goals.map((g) => {
+        if (g.id !== goalId) return g;
+        const newProgress = Math.min(100, Math.max(0, g.progress + delta));
+        const newStatus = newProgress >= 100 ? ("completed" as const) : g.status;
+        return { ...g, progress: newProgress, status: newStatus };
+      }),
     });
     toast.success("Progress updated");
   }, [state.goals]);
 
   const handleMarkComplete = useCallback((goalId: string) => {
-    dispatch({ 
-      type: 'UPDATE_GOALS', 
-      goals: state.goals.map(g =>
-        g.id === goalId ? { ...g, progress: 100, status: "completed" as const } : g
-      )
+    dispatch({
+      type: "UPDATE_GOALS",
+      goals: state.goals.map((g) => (g.id === goalId ? { ...g, progress: 100, status: "completed" as const } : g)),
     });
     toast.success("Goal marked as completed! 🎉");
   }, [state.goals]);
 
-  const openEditDialog = useCallback((goal: DevGoal) => {
-    dispatch({ type: 'OPEN_EDIT_DIALOG', goal });
-  }, []);
+  const openEditDialog = useCallback((goal: DevGoal) => { dispatch({ type: "OPEN_EDIT_DIALOG", goal }); }, []);
 
   const saveEditDialog = useCallback(() => {
     if (!state.editGoal) return;
-    dispatch({ 
-      type: 'UPDATE_GOALS', 
-      goals: state.goals.map(g =>
+    dispatch({
+      type: "UPDATE_GOALS",
+      goals: state.goals.map((g) =>
         g.id === state.editGoal!.id ? { ...g, progress: state.editProgress, status: state.editStatus as DevGoal["status"] } : g
-      )
+      ),
     });
-    dispatch({ type: 'CLOSE_EDIT_DIALOG' });
+    dispatch({ type: "CLOSE_EDIT_DIALOG" });
     toast.success("Goal updated");
   }, [state.editGoal, state.editProgress, state.editStatus, state.goals]);
 
   const handleDismissLearning = useCallback((itemId: string) => {
-    dispatch({ type: 'SET_LEARNING', learning: state.learning.filter(l => l.id !== itemId) });
+    dispatch({ type: "SET_LEARNING", learning: state.learning.filter((l) => l.id !== itemId) });
     toast("Learning item dismissed");
   }, [state.learning]);
 
@@ -210,9 +210,19 @@ const MemberDevPlan: React.FC = () => {
   }, []);
 
   const handleEnrollTraining = useCallback((trainingName: string) => {
-    dispatch({ type: 'ADD_ENROLLED_TRAINING', training: trainingName });
+    dispatch({ type: "ADD_ENROLLED_TRAINING", training: trainingName });
     toast.success(`Enrolled in "${trainingName}"`);
   }, []);
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+          <Spinner label="Loading development plan..." />
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -220,7 +230,6 @@ const MemberDevPlan: React.FC = () => {
         <PageHeader title="Individual Development Plan" subtitle="Track your growth, learning, and skill development" />
 
         <div className={styles.threeCol}>
-          {/* Column 1: Goals */}
           <div>
             <div className={styles.sectionHeader}>
               <Text weight="bold" size={500}>Goals</Text>
@@ -232,18 +241,9 @@ const MemberDevPlan: React.FC = () => {
                 </PopoverTrigger>
                 <PopoverSurface style={{ padding: "14px 18px", maxWidth: "270px" }}>
                   <Text weight="semibold" size={300} style={{ display: "block", marginBottom: "10px" }}>Goal Statuses</Text>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendBadge} style={{ backgroundColor: "#dff6dd", color: "#107c41" }}>on-track</span>
-                    <Text size={200}>Progressing as planned</Text>
-                  </div>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendBadge} style={{ backgroundColor: "#fde7e9", color: "#d13438" }}>behind</span>
-                    <Text size={200}>Needs immediate attention</Text>
-                  </div>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendBadge} style={{ backgroundColor: "#e8ebf9", color: "#5b5fc7" }}>completed</span>
-                    <Text size={200}>Goal achieved</Text>
-                  </div>
+                  <div className={styles.legendRow}><span className={styles.legendBadge} style={{ backgroundColor: "#dff6dd", color: "#107c41" }}>on-track</span><Text size={200}>Progressing as planned</Text></div>
+                  <div className={styles.legendRow}><span className={styles.legendBadge} style={{ backgroundColor: "#fde7e9", color: "#d13438" }}>behind</span><Text size={200}>Needs immediate attention</Text></div>
+                  <div className={styles.legendRow}><span className={styles.legendBadge} style={{ backgroundColor: "#e8ebf9", color: "#5b5fc7" }}>completed</span><Text size={200}>Goal achieved</Text></div>
                 </PopoverSurface>
               </Popover>
             </div>
@@ -263,34 +263,12 @@ const MemberDevPlan: React.FC = () => {
                     <div className={styles.actionRow}>
                       {!isCompleted && (
                         <>
-                          <Button
-                            size="small"
-                            appearance="subtle"
-                            icon={<Add16Regular />}
-                            onClick={() => handleUpdateProgress(goal.id, 10)}
-                            title="Add 10% progress"
-                          >
-                            +10%
-                          </Button>
-                          <Button
-                            size="small"
-                            appearance="subtle"
-                            icon={<Edit16Regular />}
-                            onClick={() => openEditDialog(goal)}
-                            title="Edit goal"
-                          />
-                          <Button
-                            size="small"
-                            appearance="subtle"
-                            icon={<CheckmarkCircle16Regular />}
-                            onClick={() => handleMarkComplete(goal.id)}
-                            title="Mark complete"
-                          />
+                          <Button size="small" appearance="subtle" icon={<Add16Regular />} onClick={() => handleUpdateProgress(goal.id, 10)} title="Add 10% progress">+10%</Button>
+                          <Button size="small" appearance="subtle" icon={<Edit16Regular />} onClick={() => openEditDialog(goal)} title="Edit goal" />
+                          <Button size="small" appearance="subtle" icon={<CheckmarkCircle16Regular />} onClick={() => handleMarkComplete(goal.id)} title="Mark complete" />
                         </>
                       )}
-                      {isCompleted && (
-                        <Text size={100} style={{ color: "#107c41", fontWeight: 600 }}>✓ Done</Text>
-                      )}
+                      {isCompleted && <Text size={100} style={{ color: "#107c41", fontWeight: 600 }}>✓ Done</Text>}
                     </div>
                   </div>
                 </Card>
@@ -298,80 +276,19 @@ const MemberDevPlan: React.FC = () => {
             })}
           </div>
 
-          {/* Column 2: Learning */}
           <div>
             <div className={styles.sectionHeader}>
               <Text weight="bold" size={500}>Recommended Learning</Text>
-              <Popover withArrow>
-                <PopoverTrigger disableButtonEnhancement>
-                  <button className={styles.infoButton} aria-label="Learning legend">
-                    <Info16Regular style={{ color: tokens.colorNeutralForeground3 }} />
-                  </button>
-                </PopoverTrigger>
-                <PopoverSurface style={{ padding: "14px 18px", maxWidth: "270px" }}>
-                  <Text weight="semibold" size={300} style={{ display: "block", marginBottom: "10px" }}>Priority Levels</Text>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendBadge} style={{ backgroundColor: "#fde7e9", color: "#d13438" }}>HIGH</span>
-                    <Text size={200}>Critical skill gap to close</Text>
-                  </div>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendBadge} style={{ backgroundColor: "#fff4ce", color: "#f7630c" }}>MEDIUM</span>
-                    <Text size={200}>Recommended focus area</Text>
-                  </div>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendBadge} style={{ backgroundColor: "#dff6dd", color: "#107c41" }}>LOW</span>
-                    <Text size={200}>Nice-to-have enrichment</Text>
-                  </div>
-                </PopoverSurface>
-              </Popover>
             </div>
-            <LearningCardList
-              items={state.learning}
-              onStart={handleStartLearning}
-              onDismiss={handleDismissLearning}
-            />
+            <LearningCardList items={state.learning} onStart={handleStartLearning} onDismiss={handleDismissLearning} />
           </div>
 
-          {/* Column 3: Skills + AI Recommendations */}
           <div>
             <div className={styles.sectionHeader}>
               <Text weight="bold" size={500}>Skills Profile</Text>
-              <Popover withArrow>
-                <PopoverTrigger disableButtonEnhancement>
-                  <button className={styles.infoButton} aria-label="Skills legend">
-                    <Info16Regular style={{ color: tokens.colorNeutralForeground3 }} />
-                  </button>
-                </PopoverTrigger>
-                <PopoverSurface style={{ padding: "14px 18px", maxWidth: "280px" }}>
-                  <Text weight="semibold" size={300} style={{ display: "block", marginBottom: "10px" }}>Skill Levels</Text>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendDot} style={{ backgroundColor: "#5b5fc7" }} />
-                    <Text size={200}><Text weight="semibold" size={200}>70+</Text> — Proficient</Text>
-                  </div>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendDot} style={{ backgroundColor: "#f7630c" }} />
-                    <Text size={200}><Text weight="semibold" size={200}>50–69</Text> — Developing</Text>
-                  </div>
-                  <div className={styles.legendRow}>
-                    <span className={styles.legendDot} style={{ backgroundColor: "#d13438" }} />
-                    <Text size={200}><Text weight="semibold" size={200}>&lt;50</Text> — Skill gap</Text>
-                  </div>
-                  <div style={{ borderTop: `1px solid ${tokens.colorNeutralStroke2}`, marginTop: "8px", paddingTop: "8px" }}>
-                    <Text weight="semibold" size={300} style={{ display: "block", marginBottom: "6px" }}>Trends</Text>
-                    <div className={styles.legendRow}>
-                      <ArrowTrending20Regular style={{ color: "#107c41", fontSize: 14 }} />
-                      <Text size={200}>Skill is improving</Text>
-                    </div>
-                    <div className={styles.legendRow}>
-                      <ArrowTrendingDown20Regular style={{ color: "#d13438", fontSize: 14 }} />
-                      <Text size={200}>Skill is declining</Text>
-                    </div>
-                  </div>
-                </PopoverSurface>
-              </Popover>
             </div>
             <Card style={{ padding: "12px 16px" }}>
-              {memberSkills.map((skill) => {
+              {state.skills.map((skill) => {
                 const color = getBarColor(skill.level);
                 return (
                   <div key={skill.name} className={styles.skillBar}>
@@ -393,11 +310,11 @@ const MemberDevPlan: React.FC = () => {
               <Text weight="bold" size={300}>Training by Skill</Text>
               <span style={{ fontSize: "9px", fontWeight: 600, padding: "1px 6px", borderRadius: "4px", backgroundColor: "#e8ebf9", color: "#5b5fc7" }}>AI</span>
             </div>
-            {memberSkills
+            {state.skills
               .filter((s) => s.level < 70 || s.trend === "down")
               .sort((a, b) => a.level - b.level)
               .map((skill) => {
-                const recs = skillRecommendations[skill.name] || [];
+                const recs = skillRecommendations[skill.name] ?? [];
                 if (recs.length === 0) return null;
                 const color = getBarColor(skill.level);
                 return (
@@ -407,7 +324,6 @@ const MemberDevPlan: React.FC = () => {
                       <span style={{ fontSize: "12px", fontWeight: 700, color }}>{skill.level}</span>
                       {skill.trend === "down" && <ArrowTrendingDown20Regular style={{ color: "#d13438", fontSize: 13 }} />}
                       {skill.level < 50 && <span style={{ fontSize: "9px", fontWeight: 600, padding: "1px 5px", borderRadius: "4px", backgroundColor: "#fde7e9", color: "#d13438" }}>Gap</span>}
-                      {skill.trend === "down" && <span style={{ fontSize: "9px", fontWeight: 600, padding: "1px 5px", borderRadius: "4px", backgroundColor: "#fff4ce", color: "#f7630c" }}>↓</span>}
                     </div>
                     {recs.map((r) => {
                       const enrolled = state.enrolledTrainings.has(r.training);
@@ -421,14 +337,7 @@ const MemberDevPlan: React.FC = () => {
                           {enrolled ? (
                             <Text size={100} style={{ color: "#107c41", fontWeight: 600, whiteSpace: "nowrap" }}>✓ Enrolled</Text>
                           ) : (
-                            <Button
-                              size="small"
-                              appearance="subtle"
-                              style={{ fontSize: "11px", minWidth: 0, padding: "2px 8px" }}
-                              onClick={() => handleEnrollTraining(r.training)}
-                            >
-                              Enroll
-                            </Button>
+                            <Button size="small" appearance="subtle" style={{ fontSize: "11px", minWidth: 0, padding: "2px 8px" }} onClick={() => handleEnrollTraining(r.training)}>Enroll</Button>
                           )}
                         </div>
                       );
@@ -440,8 +349,7 @@ const MemberDevPlan: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Goal Dialog */}
-      <Dialog open={!!state.editGoal} onOpenChange={(_, d) => { if (!d.open) dispatch({ type: 'CLOSE_EDIT_DIALOG' }); }}>
+      <Dialog open={!!state.editGoal} onOpenChange={(_, d) => { if (!d.open) dispatch({ type: "CLOSE_EDIT_DIALOG" }); }}>
         <DialogSurface>
           <DialogBody>
             <DialogTitle>Edit Goal</DialogTitle>
@@ -454,21 +362,11 @@ const MemberDevPlan: React.FC = () => {
                   </div>
                   <div>
                     <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Progress: {state.editProgress}%</Text>
-                    <Slider
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={state.editProgress}
-                      onChange={(_, d) => dispatch({ type: 'SET_EDIT_PROGRESS', progress: d.value })}
-                    />
+                    <Slider min={0} max={100} step={5} value={state.editProgress} onChange={(_, d) => dispatch({ type: "SET_EDIT_PROGRESS", progress: d.value })} />
                   </div>
                   <div>
                     <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Status</Text>
-                    <Dropdown
-                      value={state.editStatus}
-                      selectedOptions={[state.editStatus]}
-                      onOptionSelect={(_, d) => dispatch({ type: 'SET_EDIT_STATUS', status: d.optionValue || "on-track" })}
-                    >
+                    <Dropdown value={state.editStatus} selectedOptions={[state.editStatus]} onOptionSelect={(_, d) => dispatch({ type: "SET_EDIT_STATUS", status: d.optionValue || "on-track" })}>
                       <Option value="on-track">On Track</Option>
                       <Option value="behind">Behind</Option>
                       <Option value="completed">Completed</Option>

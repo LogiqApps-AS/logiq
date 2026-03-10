@@ -1,7 +1,7 @@
 import { makeStyles, tokens, Text, Card, Persona, Button, ProgressBar } from "@fluentui/react-components";
 import { Warning16Filled, ArrowRight16Regular } from "@fluentui/react-icons";
 import { useNavigate } from "react-router-dom";
-import type { Employee } from "../data/sampleData";
+import type { Employee } from "@/types";
 
 const useStyles = makeStyles({
   container: { display: "flex", flexDirection: "column", gap: "12px" },

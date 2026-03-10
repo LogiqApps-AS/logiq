@@ -2,9 +2,9 @@ import { PageHeader } from "../components/PageHeader";
 import {
   Text,
   Card,
-  Button,
   makeStyles,
   tokens,
+  Spinner,
 } from "@fluentui/react-components";
 import {
   Warning20Regular,
@@ -13,7 +13,7 @@ import {
 } from "@fluentui/react-icons";
 import { useState } from "react";
 import { AppShell } from "../components/AppShell";
-import { memberSignals } from "../data/memberDashboardData";
+import { useMemberSignals } from "../hooks/useApiData";
 
 const useStyles = makeStyles({
   signalCard: { padding: "20px", marginBottom: "12px", borderLeft: "3px solid transparent" },
@@ -38,8 +38,20 @@ const filters = ["All", "Warning", "Opportunity", "Recognition", "Wellbeing", "M
 const MemberSignals: React.FC = () => {
   const styles = useStyles();
   const [filter, setFilter] = useState("All");
+  const { data: memberSignals = [], isLoading } = useMemberSignals("1");
+
   const filtered = filter === "All" ? memberSignals : memberSignals.filter((s) => s.type === filter.toLowerCase());
   const unreadCount = memberSignals.filter((s) => s.unread).length;
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+          <Spinner label="Loading signals..." />
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -51,7 +63,7 @@ const MemberSignals: React.FC = () => {
           ))}
         </div>
         {filtered.map((signal) => {
-          const si = signalIcons[signal.type];
+          const si = signalIcons[signal.type] ?? signalIcons.wellbeing;
           return (
             <Card key={signal.id} className={styles.signalCard} style={{ borderLeftColor: si.border }}>
               <div className={styles.signalRow}>

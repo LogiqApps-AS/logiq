@@ -8,8 +8,8 @@ import {
 import { useState, useMemo } from "react";
 import { ArrowSortDown20Regular, ArrowSortUp20Regular } from "@fluentui/react-icons";
 import { useNavigate } from "react-router-dom";
-import { employees } from "../data/sampleData";
-import type { Employee } from "../data/sampleData";
+import type { Employee } from "@/lib/api";
+import { useEmployees } from "../hooks/useApiData";
 import { AIOverviewDialog } from "./AIOverviewDialog";
 
 const useStyles = makeStyles({
@@ -100,6 +100,7 @@ const DeliveryTab: React.FC = () => {
   const [aiEmployee, setAiEmployee] = useState<Employee | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const { data: employees = [] } = useEmployees("team1");
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -114,12 +115,12 @@ const DeliveryTab: React.FC = () => {
     const list = [...employees];
     list.sort((a, b) => {
       let cmp = 0;
-      if (sortKey === "score") cmp = a.delivery.score - b.delivery.score;
+      if (sortKey === "score") cmp = (a.delivery?.score ?? 0) - (b.delivery?.score ?? 0);
       else cmp = a.name.localeCompare(b.name);
       return sortDir === "asc" ? cmp : -cmp;
     });
     return list;
-  }, [sortKey, sortDir]);
+  }, [employees, sortKey, sortDir]);
 
   return (
     <div>
