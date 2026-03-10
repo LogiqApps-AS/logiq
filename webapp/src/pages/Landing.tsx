@@ -1,4 +1,4 @@
-import { Text, Button, makeStyles, tokens, Badge } from "@fluentui/react-components";
+import { Text, Button, makeStyles, mergeClasses, tokens, Badge } from "@fluentui/react-components";
 import {
   BrainCircuit24Regular,
   BrainCircuit20Regular,
@@ -492,10 +492,10 @@ const Landing = () => {
             {
               icon: <Shield20Regular />,
               title: "Privacy by Design",
-              desc: "Team Members get private coaching. Team Leads get team-level insights. Strict role boundaries.",
+              desc: `Team Members get private coaching. Team Leads get team-level insights. Strict role boundaries.`,
             },
           ].map((f, i) => (
-            <RevealItem key={f.title} delay={i * 0.12} className={`${styles.whyCard} hover-lift`}>
+              <RevealItem key={f.title} delay={i * 0.12} className={mergeClasses(styles.whyCard, "hover-lift")}>
               <div className={styles.whyIcon}>{f.icon}</div>
               <Text weight="semibold" size={400} block style={{ marginBottom: "8px" }}>
                 {f.title}
@@ -517,15 +517,16 @@ const Landing = () => {
           </p>
           <div className={styles.agentGrid}>
             {agents.map((a, i) => (
-              <RevealItem key={a.title} delay={i * 0.08} className={`${styles.agentCard} hover-lift`}>
+              <RevealItem key={a.title} delay={i * 0.08} className={mergeClasses(styles.agentCard, "hover-lift")}>
                 <span
-                  className={`${styles.agentBadge} ${
+                  className={mergeClasses(
+                    styles.agentBadge,
                     a.type === "analyzer"
                       ? styles.agentBadgeAnalyzer
                       : a.type === "synthesis"
-                        ? styles.agentBadgeSynthesis
-                        : styles.agentBadgeCopilot
-                  }`}
+                      ? styles.agentBadgeSynthesis
+                      : styles.agentBadgeCopilot
+                  )}
                 >
                   {a.type}
                 </span>
@@ -549,7 +550,7 @@ const Landing = () => {
         </p>
         <div className={styles.kpiGrid}>
           {kpis.map((k, i) => (
-            <RevealItem key={k.label} delay={i * 0.1} className={`${styles.kpiCard} hover-lift`}>
+            <RevealItem key={k.label} delay={i * 0.1} className={mergeClasses(styles.kpiCard, "hover-lift")}>
               <div className={styles.kpiScore} style={{ color: k.data ? statusColors[k.data.status] : "#999" }}>
                 {k.data?.score ?? "—"}
               </div>
@@ -572,7 +573,7 @@ const Landing = () => {
             <RevealItem
               key={s.title}
               delay={i * 0.12}
-              className={`${styles.signalCard} hover-lift`}
+              className={mergeClasses(styles.signalCard, "hover-lift")}
               style={{ borderLeftColor: s.color }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
@@ -595,7 +596,7 @@ const Landing = () => {
           <h2 className={styles.sectionTitle}>Two Experiences, One Platform</h2>
           <p className={styles.sectionSubtitle}>&nbsp;</p>
           <div className={styles.rolesGrid}>
-            <RevealItem delay={0} className={`${styles.roleCard} hover-lift`}>
+            <RevealItem delay={0} className={mergeClasses(styles.roleCard, "hover-lift")}>
               <Text weight="bold" size={500} block style={{ marginBottom: "8px" }}>
                 Team Lead
               </Text>
@@ -616,7 +617,7 @@ const Landing = () => {
                 ))}
               </ul>
             </RevealItem>
-            <RevealItem delay={0.15} className={`${styles.roleCard} hover-lift`}>
+            <RevealItem delay={0.15} className={mergeClasses(styles.roleCard, "hover-lift")}>
               <Text weight="bold" size={500} block style={{ marginBottom: "8px" }}>
                 Team Member
               </Text>

@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   makeStyles,
+  mergeClasses,
   tokens,
 } from "@fluentui/react-components";
 import {
@@ -129,7 +130,7 @@ const DemoMode = () => {
           onClick={() => handleRoleSelect("lead")}
         >
           <div className={styles.roleHeader}>
-            <div className={`${styles.roleIcon} ${styles.leadIcon}`}>
+            <div className={mergeClasses(styles.roleIcon, styles.leadIcon)}>
               <People20Filled />
             </div>
             <div>
@@ -155,7 +156,7 @@ const DemoMode = () => {
           onClick={() => handleRoleSelect("member")}
         >
           <div className={styles.roleHeader}>
-            <div className={`${styles.roleIcon} ${styles.memberIcon}`}>
+            <div className={mergeClasses(styles.roleIcon, styles.memberIcon)}>
               <Person20Filled />
             </div>
             <div>

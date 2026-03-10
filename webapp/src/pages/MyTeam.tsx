@@ -4,13 +4,14 @@ import {
   Card,
   Persona,
   Button,
-  Tooltip,
+  ProgressBar,
   makeStyles,
+  mergeClasses,
   shorthands,
   tokens,
-  Tab,
   TabList,
-  ProgressBar,
+  Tab,
+  Tooltip,
 } from "@fluentui/react-components";
 import {
   Warning16Filled,
@@ -266,7 +267,7 @@ const MyTeam = () => {
             {(filteredEmployees || employees!).map((emp) => {
               const isAtRisk = emp.churnRisk === "At risk";
               return (
-                <Card key={emp.id} className={`${styles.card} ${isAtRisk ? styles.cardAtRisk : ""}`} onClick={() => navigate(`/teams/1/members/${emp.id}`)}>
+                <Card key={emp.id} className={mergeClasses(styles.card, isAtRisk && styles.cardAtRisk)} onClick={() => navigate(`/dashboard/teams/1/members/${emp.id}`)}>
                   <div className={styles.header}>
                     <Persona
                       name={emp.name}

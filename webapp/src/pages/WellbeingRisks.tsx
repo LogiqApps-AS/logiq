@@ -2,12 +2,15 @@ import { PageHeader } from "../components/PageHeader";
 import {
   Text,
   Card,
+  Button,
   makeStyles,
+  mergeClasses,
   shorthands,
   tokens,
-  Tab,
   TabList,
-  Button,
+  Tab,
+  ProgressBar,
+  Spinner,
 } from "@fluentui/react-components";
 import {
   Money20Regular,
@@ -218,7 +221,7 @@ const WellbeingRisks = () => {
           totalChurnExposure={totalChurnExposure}
           avgPreventability={avgPreventability}
           onNavigateToPrep={() => { setInsightsOpen(false); navigate("/prep"); }}
-          onNavigateToProfile={(id) => { setInsightsOpen(false); navigate(`/teams/1/members/${id}`); }}
+          onNavigateToProfile={(id) => { setInsightsOpen(false); navigate(`/dashboard/teams/1/members/${id}`); }}
         />
 
         <TabList selectedValue={activeTab} onTabSelect={(_, d) => setActiveTab(d.value as string)} style={{ marginBottom: "20px" }}>
@@ -311,7 +314,7 @@ const WellbeingRisks = () => {
                 signal.type === "critical" ? styles.signalCritical :
                 signal.type === "warning" ? styles.signalWarning : styles.signalInfo;
               return (
-                <Card key={signal.id} className={`${styles.signalCard} ${borderClass}`}>
+                <Card key={signal.id} className={mergeClasses(styles.signalCard, borderClass)}>
                   <div className={styles.signalTitleRow}>
                     <span style={{ color: typeColors[signal.type] }}>{iconMap[signal.icon] || <Warning20Filled />}</span>
                     <Text weight="bold" size={400}>{signal.title}</Text>

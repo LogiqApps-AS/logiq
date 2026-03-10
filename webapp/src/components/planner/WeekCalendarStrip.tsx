@@ -1,5 +1,6 @@
 import {
   makeStyles,
+  mergeClasses,
   shorthands,
   tokens,
   Text,
@@ -101,7 +102,7 @@ export const WeekCalendarStrip: React.FC<WeekCalendarStripProps> = ({ meetings, 
           return (
             <div
               key={day.toISOString()}
-              className={`${styles.dayCell} ${isSelected ? styles.dayCellSelected : isToday ? styles.dayCellSelected : ""}`}
+              className={mergeClasses(styles.dayCell, (isSelected || isToday) && styles.dayCellSelected)}
               onClick={() => onDateSelect?.(day)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDateSelect?.(day); } }}
               role="button"

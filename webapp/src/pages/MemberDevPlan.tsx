@@ -4,20 +4,21 @@ import { Sparkle20Filled, Lightbulb16Filled, Info16Regular, Edit16Regular, Check
 import {
   Text,
   Card,
-  makeStyles,
-  tokens,
+  Button,
   ProgressBar,
+  makeStyles,
+  mergeClasses,
+  tokens,
   Popover,
   PopoverTrigger,
   PopoverSurface,
-  Button,
   Dialog,
   DialogTrigger,
   DialogSurface,
-  DialogBody,
   DialogTitle,
-  DialogContent,
+  DialogBody,
   DialogActions,
+  DialogContent,
   Slider,
   Dropdown,
   Option,
@@ -241,9 +242,9 @@ const MemberDevPlan: React.FC = () => {
                 </PopoverTrigger>
                 <PopoverSurface style={{ padding: "14px 18px", maxWidth: "270px" }}>
                   <Text weight="semibold" size={300} style={{ display: "block", marginBottom: "10px" }}>Goal Statuses</Text>
-                  <div className={styles.legendRow}><span className={styles.legendBadge} style={{ backgroundColor: "#dff6dd", color: "#107c41" }}>on-track</span><Text size={200}>Progressing as planned</Text></div>
-                  <div className={styles.legendRow}><span className={styles.legendBadge} style={{ backgroundColor: "#fde7e9", color: "#d13438" }}>behind</span><Text size={200}>Needs immediate attention</Text></div>
-                  <div className={styles.legendRow}><span className={styles.legendBadge} style={{ backgroundColor: "#e8ebf9", color: "#5b5fc7" }}>completed</span><Text size={200}>Goal achieved</Text></div>
+                  <div className={styles.legendRow}><span className={mergeClasses(styles.legendBadge)} style={{ backgroundColor: "#dff6dd", color: "#107c41" }}>on-track</span><Text size={200}>Progressing as planned</Text></div>
+                  <div className={styles.legendRow}><span className={mergeClasses(styles.legendBadge)} style={{ backgroundColor: "#fde7e9", color: "#d13438" }}>behind</span><Text size={200}>Needs immediate attention</Text></div>
+                  <div className={styles.legendRow}><span className={mergeClasses(styles.legendBadge)} style={{ backgroundColor: "#e8ebf9", color: "#5b5fc7" }}>completed</span><Text size={200}>Goal achieved</Text></div>
                 </PopoverSurface>
               </Popover>
             </div>

@@ -1,13 +1,15 @@
 import {
-  makeStyles,
-  shorthands,
-  tokens,
   Text,
+  Card,
   Persona,
   Button,
-  Tab,
-  TabList,
   ProgressBar,
+  makeStyles,
+  mergeClasses,
+  shorthands,
+  tokens,
+  TabList,
+  Tab,
   Spinner,
 } from "@fluentui/react-components";
 import {
@@ -165,11 +167,11 @@ const useStyles = makeStyles({
   },
   signalCritical: {
     backgroundColor: "#fff0f0",
-    borderColor: "#ffd7d7",
+    ...shorthands.borderColor("#ffd7d7"),
   },
   signalWarning: {
     backgroundColor: "#fff9f0",
-    borderColor: "#ffe0b2",
+    ...shorthands.borderColor("#ffe0b2"),
   },
   roleTimeline: {
     display: "flex",
@@ -479,7 +481,7 @@ const TeamMemberDetail = () => {
             detail.signals.length > 0 ? detail.signals.map((s) => (
             <div
               key={s.id}
-              className={`${styles.signalCard} ${s.severity === "critical" ? styles.signalCritical : styles.signalWarning}`}
+              className={mergeClasses(styles.signalCard, s.severity === "critical" ? styles.signalCritical : styles.signalWarning)}
             >
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

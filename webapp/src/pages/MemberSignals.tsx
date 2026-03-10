@@ -2,7 +2,9 @@ import { PageHeader } from "../components/PageHeader";
 import {
   Text,
   Card,
+  Button,
   makeStyles,
+  mergeClasses,
   tokens,
   Spinner,
 } from "@fluentui/react-components";
@@ -58,7 +60,7 @@ const MemberSignals: React.FC = () => {
         <PageHeader title="Your Signals" subtitle={`${unreadCount} unread signal${unreadCount !== 1 ? "s" : ""} · Personalized insights and alerts`} />
         <div className={styles.filterRow}>
           {filters.map((f) => (
-            <button key={f} className={`${styles.chip} ${filter === f ? styles.chipActive : ""}`} onClick={() => setFilter(f)}>{f}</button>
+            <button key={f} className={mergeClasses(styles.chip, filter === f && styles.chipActive)} onClick={() => setFilter(f)}>{f}</button>
           ))}
         </div>
         {filtered.map((signal) => {

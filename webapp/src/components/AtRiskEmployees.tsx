@@ -72,7 +72,7 @@ export const AtRiskEmployees: React.FC<AtRiskEmployeesProps> = ({ employees }) =
       </div>
       <div className={styles.container}>
         {atRisk.map((emp) => (
-          <Card key={emp.id} className={styles.card} onClick={() => navigate(`/teams/1/members/${emp.id}`)}>
+          <Card key={emp.id} className={styles.card} onClick={() => navigate(`/dashboard/teams/1/members/${emp.id}`)}>
             <div className={styles.empHeader}>
               <Persona
                 name={emp.name}

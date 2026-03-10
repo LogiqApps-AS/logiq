@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRole } from '../contexts/RoleContext';
+import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 import {
-  makeStyles,
-  mergeClasses,
-  tokens,
   Text,
   Button,
-} from '@fluentui/react-components';
+}
+from '@fluentui/react-components';
 import {
   Home24Regular,
   Home24Filled,

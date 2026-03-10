@@ -1,9 +1,10 @@
 import {
-  makeStyles,
-  tokens,
   Text,
   Card,
   Button,
+  makeStyles,
+  mergeClasses,
+  tokens,
 } from "@fluentui/react-components";
 import {
   Warning20Filled,
@@ -55,7 +56,7 @@ export const RecentSignals: React.FC<RecentSignalsProps> = ({ signals }) => {
     <div>
       <div className={styles.header}>
         <Text size={500} weight="bold">Recent Signals</Text>
-        <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }} onClick={() => navigate("/wellbeing")}>
+        <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }} onClick={() => navigate("/dashboard/wellbeing")}>
           View All
         </Button>
       </div>
@@ -65,7 +66,7 @@ export const RecentSignals: React.FC<RecentSignalsProps> = ({ signals }) => {
             signal.type === "critical" ? styles.cardCritical :
             signal.type === "warning" ? styles.cardWarning : styles.cardInfo;
           return (
-            <Card key={signal.id} className={`${styles.card} ${borderClass}`}>
+            <Card key={signal.id} className={mergeClasses(styles.card, borderClass)}>
               <div className={styles.titleRow}>
                 <span style={{ color: typeColors[signal.type] }}>
                   {iconMap[signal.icon] || <Warning20Filled />}
@@ -81,9 +82,9 @@ export const RecentSignals: React.FC<RecentSignalsProps> = ({ signals }) => {
                 {signal.actionLabel && (
                   <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }}
                     onClick={() => {
-                      if (signal.action === "profile" && signal.employeeId) navigate(`/teams/1/members/${signal.employeeId}`);
-                      else if (signal.action === "prep") navigate("/prep");
-                      else if (signal.action === "rebalance" && signal.employeeId) navigate(`/teams/1/members/${signal.employeeId}`);
+                      if (signal.action === "profile" && signal.employeeId) navigate(`/dashboard/teams/1/members/${signal.employeeId}`);
+                      else if (signal.action === "prep") navigate("/dashboard/prep");
+                      else if (signal.action === "rebalance" && signal.employeeId) navigate(`/dashboard/teams/1/members/${signal.employeeId}`);
                     }}
                   >
                     {signal.actionLabel}

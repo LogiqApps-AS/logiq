@@ -1,5 +1,6 @@
 import {
   makeStyles,
+  mergeClasses,
   tokens,
   Text,
   Persona,
@@ -424,7 +425,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           </div>
         </div>
         )}
-        <div className={`${styles.main} page-animate stagger-children`} key={location.pathname}>
+        <div className={mergeClasses(styles.main, "page-animate", "stagger-children")} key={location.pathname}>
           {children}
         </div>
       </div>

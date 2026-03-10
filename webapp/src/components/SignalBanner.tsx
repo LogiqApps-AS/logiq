@@ -52,7 +52,7 @@ export const SignalBanner: React.FC<Props> = ({ count }) => {
           {count} urgent signals require attention
         </Text>
       </div>
-      <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }} onClick={() => navigate("/wellbeing")}>
+      <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }} onClick={() => navigate("/dashboard/wellbeing")}>
         View All
       </Button>
     </div>

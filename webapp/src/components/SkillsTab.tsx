@@ -5,6 +5,7 @@ import {
   Badge,
   Persona,
   makeStyles,
+  mergeClasses,
   tokens,
 } from "@fluentui/react-components";
 import {
@@ -265,7 +266,7 @@ const SkillsTab: React.FC = () => {
         {allSkills.map((skill) => (
           <button
             key={skill}
-            className={`${styles.chip} ${selectedSkills.has(skill) ? styles.chipActive : ""}`}
+            className={mergeClasses(styles.chip, selectedSkills.has(skill) && styles.chipActive)}
             onClick={() => toggleSkill(skill)}
           >
             {skill}
@@ -308,7 +309,7 @@ const SkillsTab: React.FC = () => {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={`${styles.th} ${styles.thName}`}>TEAM MEMBER</th>
+              <th className={mergeClasses(styles.th, styles.thName)}>TEAM MEMBER</th>
               {visibleSkills.map((skill) => (
                 <th key={skill} className={styles.th}>{skill.toUpperCase()}</th>
               ))}
@@ -320,7 +321,7 @@ const SkillsTab: React.FC = () => {
               const overallStatus = emp.wellbeing.status;
               return (
                 <tr key={emp.id}>
-                  <td className={`${styles.td} ${styles.tdName}`}>
+                  <td className={mergeClasses(styles.td, styles.tdName)}>
                     <div className={styles.nameCell} role="button" tabIndex={0} onClick={() => setAiEmployee(emp)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setAiEmployee(emp); } }} style={{ cursor: "pointer" }}>
                       <Persona
                         name={emp.name}
@@ -333,7 +334,7 @@ const SkillsTab: React.FC = () => {
                   {visibleSkills.map((skill) => (
                     <td key={skill} className={styles.td}>
                       <span
-                        className={`${styles.dot} ${empSkillSet.has(skill) ? styles.dotFilled : styles.dotEmpty}`}
+                        className={mergeClasses(styles.dot, empSkillSet.has(skill) ? styles.dotFilled : styles.dotEmpty)}
                       />
                     </td>
                   ))}
@@ -359,7 +360,7 @@ const SkillsTab: React.FC = () => {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
               key={p}
-              className={`${styles.pageButton} ${p === page ? styles.pageButtonActive : ""}`}
+              className={mergeClasses(styles.pageButton, p === page && styles.pageButtonActive)}
               onClick={() => setPage(p)}
             >
               {p}
