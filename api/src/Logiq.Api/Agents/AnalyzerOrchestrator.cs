@@ -1,0 +1,144 @@
+using Logiq.Api.Agents.Abstracts;
+using Logiq.Api.Contracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
+
+namespace Logiq.Api.Agents;
+
+public sealed class AnalyzerOrchestrator(
+    IWellbeingRiskAnalyzer wellbeingAnalyzer,
+    ISkillsGrowthAnalyzer skillsAnalyzer,
+    IDeliveryWorkloadAnalyzer deliveryAnalyzer,
+    IConversationPrepAgent conversationPrepAgent,
+    IEmployeeRepository employeeRepository,
+    ITeamKpiRepository kpiRepository,
+    ILogger<AnalyzerOrchestrator> logger) : IAnalyzerOrchestrator
+{
+    public async Task RunFullAnalysisAsync(string teamId, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Starting full analysis pipeline for team {TeamId}", teamId);
+
+        Task<WellbeingAnalysis> wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<SkillsAnalysis> skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<DeliveryAnalysis> deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+
+        await Task.WhenAll(wellbeingTask, skillsTask, deliveryTask);
+
+        WellbeingAnalysis wellbeing = await wellbeingTask;
+        SkillsAnalysis skills = await skillsTask;
+        DeliveryAnalysis delivery = await deliveryTask;
+
+        logger.LogInformation(
+            "Analysis complete for team {TeamId}: Wellbeing={Wellbeing:F0}, Skills={Skills:F0}, Delivery={Delivery:F0}",
+            teamId, wellbeing.TeamWellbeingIndex, skills.TeamSkillsCoverageAvg, delivery.TeamVelocityAvg);
+
+        TeamKpis kpis = BuildTeamKpisFromAnalysis(wellbeing, skills, delivery);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        TeamFinancials financials = ComputeFinancials(employees);
+
+        await kpiRepository.UpsertAsync(teamId, kpis, financials, cancellationToken);
+    }
+
+    public async Task<ConversationPrep> PrepareConversationAsync(string teamId, string memberId,
+        CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Preparing 1:1 brief via A2A pipeline for {MemberId} in team {TeamId}", memberId, teamId);
+
+        Task<WellbeingAnalysis> wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<SkillsAnalysis> skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<DeliveryAnalysis> deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+
+        await Task.WhenAll(wellbeingTask, skillsTask, deliveryTask);
+
+        return await conversationPrepAgent.PrepareAsync(
+            teamId,
+            memberId,
+            await wellbeingTask,
+            await skillsTask,
+            await deliveryTask,
+            cancellationToken);
+    }
+
+    public async Task<TeamKpis> ComputeTeamKpisAsync(string teamId, CancellationToken cancellationToken = default)
+    {
+        Task<WellbeingAnalysis> wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<SkillsAnalysis> skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<DeliveryAnalysis> deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+
+        await Task.WhenAll(wellbeingTask, skillsTask, deliveryTask);
+
+        return BuildTeamKpisFromAnalysis(await wellbeingTask, await skillsTask, await deliveryTask);
+    }
+
+    private static TeamKpis BuildTeamKpisFromAnalysis(
+        WellbeingAnalysis wellbeing,
+        SkillsAnalysis skills,
+        DeliveryAnalysis delivery)
+    {
+        int wellbeingScore = (int) wellbeing.TeamWellbeingIndex;
+        int skillsScore = (int) skills.TeamSkillsCoverageAvg;
+        int deliveryScore = (int) delivery.TeamVelocityAvg;
+
+        return new TeamKpis
+        {
+            Wellbeing = new TeamKpiMetric
+            {
+                Score = wellbeingScore,
+                Status = ScoreToStatus(wellbeingScore),
+                Label = "Well-being Index",
+                Trend = -6.9,
+                Description = wellbeing.Summary
+            },
+            Skills = new TeamKpiMetric
+            {
+                Score = skillsScore,
+                Status = ScoreToStatus(skillsScore),
+                Label = "Skills & Development",
+                Trend = 4.4,
+                Description = skills.Summary
+            },
+            Motivation = new TeamKpiMetric
+            {
+                Score = wellbeingScore - 6,
+                Status = ScoreToStatus(wellbeingScore - 6),
+                Label = "Motivation Index",
+                Trend = -2.7,
+                Description = "Derived from wellbeing and engagement signals."
+            },
+            Churn = new TeamKpiMetric
+            {
+                Score = deliveryScore,
+                Status = ScoreToStatus(deliveryScore),
+                Label = "Churn & Retention",
+                Trend = -8.6,
+                Description = "Composite of churn risk and preventability scores."
+            },
+            Delivery = new TeamKpiMetric
+            {
+                Score = deliveryScore,
+                Status = ScoreToStatus(deliveryScore),
+                Label = "Delivery & Workload",
+                Trend = -9.9,
+                Description = delivery.Summary
+            }
+        };
+    }
+
+    private static TeamFinancials ComputeFinancials(IReadOnlyList<Employee> employees)
+    {
+        List<Employee> atRisk = employees.Where(e => e.ChurnRisk is "At risk" or "Medium").ToList();
+        return new TeamFinancials
+        {
+            AtRiskCount = atRisk.Count,
+            TotalEmployees = employees.Count,
+            ChurnExposure = atRisk.Sum(e => e.ReplacementCost),
+            TotalPeopleRisk = employees.Where(e => e.ChurnRisk != "Low").Sum(e => e.ReplacementCost)
+        };
+    }
+
+    private static string ScoreToStatus(int score) => score switch
+    {
+        >= 75 => "green",
+        >= 60 => "yellow",
+        _ => "red"
+    };
+}

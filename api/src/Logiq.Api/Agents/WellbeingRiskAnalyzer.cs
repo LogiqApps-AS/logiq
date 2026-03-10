@@ -1,17 +1,13 @@
-using System.Text.Json;
+﻿using System.Text.Json;
+using Logiq.Api.Agents.Abstracts;
+using Logiq.Api.Contracts;
 using Logiq.Api.Mcp;
-using Logiq.Api.Models;
-using Logiq.Api.Storage;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Logiq.Api.Agents;
-
-public interface IWellbeingRiskAnalyzer
-{
-    Task<WellbeingAnalysis> AnalyzeTeamAsync(string teamId, CancellationToken cancellationToken = default);
-}
 
 public sealed class WellbeingRiskAnalyzer(
     IAgentKernelFactory kernelFactory,
@@ -21,7 +17,7 @@ public sealed class WellbeingRiskAnalyzer(
     ILogger<WellbeingRiskAnalyzer> logger) : IWellbeingRiskAnalyzer
 {
     private const string AgentInstructions = """
-                                             You are the Wellbeing & Risk Analyzer for Logiq, an AI-powered people intelligence platform.
+                                             You are the Wellbeing & Risk Analyzer for LogIQ, an AI-powered people intelligence platform.
 
                                              Your role:
                                              - Analyze employee wellbeing, engagement, and churn risk data from HR systems
@@ -46,46 +42,46 @@ public sealed class WellbeingRiskAnalyzer(
     {
         logger.LogInformation("Running Wellbeing & Risk analysis for team {TeamId}", teamId);
 
-        var pulseJson = await wellbeingTools.GetPulseResults(teamId, cancellationToken);
-        var safetyJson = await wellbeingTools.GetSafetyScores(teamId, cancellationToken);
-        var sentimentJson = await wellbeingTools.GetSentimentTrends(teamId, cancellationToken);
-        var absencesJson = await hrTools.ListAbsences(teamId, cancellationToken);
+        string pulseJson = await wellbeingTools.GetPulseResults(teamId, cancellationToken);
+        string safetyJson = await wellbeingTools.GetSafetyScores(teamId, cancellationToken);
+        string sentimentJson = await wellbeingTools.GetSentimentTrends(teamId, cancellationToken);
+        string absencesJson = await hrTools.ListAbsences(teamId, cancellationToken);
 
-        var kernel = kernelFactory.CreateKernel();
-        var agent = new ChatCompletionAgent
+        Kernel kernel = kernelFactory.CreateKernel();
+        ChatCompletionAgent agent = new()
         {
             Name = "WellbeingRiskAnalyzer",
             Instructions = AgentInstructions,
             Kernel = kernel
         };
 
-        var prompt = $"""
-                      Analyze this team's wellbeing data and return a JSON WellbeingAnalysis object.
-                      Team ID: {teamId}
+        string prompt = $"""
+                         Analyze this team's wellbeing data and return a JSON WellbeingAnalysis object.
+                         Team ID: {teamId}
 
-                      Pulse/Engagement data:
-                      {pulseJson}
+                         Pulse/Engagement data:
+                         {pulseJson}
 
-                      Psychological safety and work-life balance:
-                      {safetyJson}
+                         Psychological safety and work-life balance:
+                         {safetyJson}
 
-                      Churn risk and sentiment trends:
-                      {sentimentJson}
+                         Churn risk and sentiment trends:
+                         {sentimentJson}
 
-                      Absence and overtime data:
-                      {absencesJson}
+                         Absence and overtime data:
+                         {absencesJson}
 
-                      Return ONLY valid JSON matching the WellbeingAnalysis schema. No markdown, no explanation.
-                      """;
+                         Return ONLY valid JSON matching the WellbeingAnalysis schema. No markdown, no explanation.
+                         """;
 
-        var chat = new AgentGroupChat(agent);
+        AgentGroupChat chat = new(agent);
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, prompt));
 
-        var responseText = string.Empty;
-        await foreach (var message in chat.InvokeAsync(cancellationToken))
+        string responseText = string.Empty;
+        await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
             responseText += message.Content;
 
-        var analysis = TryParseAnalysis(responseText, teamId);
+        WellbeingAnalysis analysis = TryParseAnalysis(responseText, teamId);
 
         await PersistSignalsToStorage(teamId, analysis, cancellationToken);
 
@@ -95,9 +91,9 @@ public sealed class WellbeingRiskAnalyzer(
     private async Task PersistSignalsToStorage(string teamId, WellbeingAnalysis analysis,
         CancellationToken cancellationToken)
     {
-        foreach (var risk in analysis.RiskSignals.Where(r => r.RiskLevel is "High" or "Critical"))
+        foreach (EmployeeRiskSignal risk in analysis.RiskSignals.Where(r => r.RiskLevel is "High" or "Critical"))
         {
-            var signal = new Signal
+            Signal signal = new()
             {
                 Id = $"wellbeing-{risk.EmployeeId}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
                 Type = risk.RiskLevel == "Critical" ? "critical" : "warning",
@@ -116,8 +112,10 @@ public sealed class WellbeingRiskAnalyzer(
     {
         try
         {
-            var result = JsonSerializer.Deserialize<WellbeingAnalysis>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+#pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+            WellbeingAnalysis? result = JsonSerializer.Deserialize<WellbeingAnalysis>(json,
+                new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+#pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
             return result ?? FallbackAnalysis(teamId);
         }
         catch

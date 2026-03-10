@@ -1,4 +1,6 @@
-using System.Text.Json;
+﻿using System.Text.Json;
+using Logiq.Api.Agents.Abstracts;
+using Logiq.Api.Contracts;
 using Logiq.Api.Mcp;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -6,36 +8,31 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Logiq.Api.Agents;
 
-public interface ISkillsGrowthAnalyzer
-{
-    Task<SkillsAnalysis> AnalyzeTeamAsync(string teamId, CancellationToken cancellationToken = default);
-}
-
 public sealed class SkillsGrowthAnalyzer(
     IAgentKernelFactory kernelFactory,
     LearningSkillsTools learningTools,
     ILogger<SkillsGrowthAnalyzer> logger) : ISkillsGrowthAnalyzer
 {
     private const string AgentInstructions = """
-        You are the Skills & Growth Analyzer for Logiq.
+                                             You are the Skills & Growth Analyzer for LogIQ.
 
-        Your role:
-        - Assess team skills coverage and identify critical gaps
-        - Evaluate IDP progress and learning engagement
-        - Recommend specific learning paths for employees
+                                             Your role:
+                                             - Assess team skills coverage and identify critical gaps
+                                             - Evaluate IDP progress and learning engagement
+                                             - Recommend specific learning paths for employees
 
-        When given training and skill data, you will:
-        1. Calculate average skills coverage across the team
-        2. Identify the top 3-5 critical skill gaps (skills with <50% coverage or missing from the team)
-        3. For each employee, recommend 1-2 specific learning items based on their skill gaps and IDP progress
-        4. Surface employees with stalled IDP progress (<20% progress) as concerns
-        5. Produce a brief summary with top insights
+                                             When given training and skill data, you will:
+                                             1. Calculate average skills coverage across the team
+                                             2. Identify the top 3-5 critical skill gaps (skills with <50% coverage or missing from the team)
+                                             3. For each employee, recommend 1-2 specific learning items based on their skill gaps and IDP progress
+                                             4. Surface employees with stalled IDP progress (<20% progress) as concerns
+                                             5. Produce a brief summary with top insights
 
-        Return a JSON object matching SkillsAnalysis schema with: teamId, teamSkillsCoverageAvg, criticalSkillGaps (string array), employeeInsights (array), summary.
-        Each employeeInsight has: employeeId, name, skillsCoverage, idpProgress, recommendedLearning (string array).
+                                             Return a JSON object matching SkillsAnalysis schema with: teamId, teamSkillsCoverageAvg, criticalSkillGaps (string array), employeeInsights (array), summary.
+                                             Each employeeInsight has: employeeId, name, skillsCoverage, idpProgress, recommendedLearning (string array).
 
-        Return ONLY valid JSON. No markdown, no explanation.
-        """;
+                                             Return ONLY valid JSON. No markdown, no explanation.
+                                             """;
 
     public async Task<SkillsAnalysis> AnalyzeTeamAsync(string teamId, CancellationToken cancellationToken = default)
     {
@@ -69,7 +66,7 @@ public sealed class SkillsGrowthAnalyzer(
                          Return ONLY valid JSON matching the SkillsAnalysis schema. No markdown, no explanation.
                          """;
 
-        AgentGroupChat chat = new AgentGroupChat(agent);
+        AgentGroupChat chat = new(agent);
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, prompt));
 
         string responseText = string.Empty;
@@ -85,7 +82,7 @@ public sealed class SkillsGrowthAnalyzer(
         {
             SkillsAnalysis? result = JsonSerializer.Deserialize<SkillsAnalysis>(json,
 #pragma warning disable CA1869
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
 #pragma warning restore CA1869
             return result ?? FallbackAnalysis(teamId);
         }

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json;
-using Logiq.Api.Storage;
+using Logiq.Api.Contracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using ModelContextProtocol.Server;
 
 namespace Logiq.Api.Mcp;
@@ -11,12 +12,13 @@ public sealed class WellbeingSignalsTools(
     ISignalRepository signalRepository)
 {
     [McpServerTool]
-    [Description("Returns pulse survey results and engagement scores for all team members including wellbeing index and engagement pulse.")]
+    [Description(
+        "Returns pulse survey results and engagement scores for all team members including wellbeing index and engagement pulse.")]
     public async Task<string> GetPulseResults(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var pulse = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -36,7 +38,7 @@ public sealed class WellbeingSignalsTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var scores = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -54,17 +56,18 @@ public sealed class WellbeingSignalsTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var signals = await signalRepository.ListTeamSignalsAsync(teamId, cancellationToken);
+        IReadOnlyList<Signal> signals = await signalRepository.ListTeamSignalsAsync(teamId, cancellationToken);
         return JsonSerializer.Serialize(signals);
     }
 
     [McpServerTool]
-    [Description("Returns sentiment trend data derived from churn risk, preventability, and retention metrics for each employee.")]
+    [Description(
+        "Returns sentiment trend data derived from churn risk, preventability, and retention metrics for each employee.")]
     public async Task<string> GetSentimentTrends(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var trends = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -79,13 +82,16 @@ public sealed class WellbeingSignalsTools(
     }
 
     [McpServerTool]
-    [Description("Returns signals for a specific team member including warnings, opportunities, and recognition alerts.")]
+    [Description(
+        "Returns signals for a specific team member including warnings, opportunities, and recognition alerts.")]
     public async Task<string> GetMemberSignals(
         [Description("The team identifier")] string teamId,
-        [Description("The employee identifier")] string memberId,
+        [Description("The employee identifier")]
+        string memberId,
         CancellationToken cancellationToken)
     {
-        var signals = await signalRepository.ListMemberSignalsAsync(teamId, memberId, cancellationToken);
+        IReadOnlyList<MemberSignal> signals =
+            await signalRepository.ListMemberSignalsAsync(teamId, memberId, cancellationToken);
         return JsonSerializer.Serialize(signals);
     }
 }
