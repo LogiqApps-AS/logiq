@@ -26,7 +26,7 @@ import {
   CalendarClock20Regular,
 } from "@fluentui/react-icons";
 import { useState } from "react";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { CopilotInsightsDialog } from "../components/CopilotInsightsDialog";
 import { useNavigate } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
@@ -138,8 +138,7 @@ const WellbeingRisks = () => {
   const criticalSignalCount = signals?.filter((s) => s.type === "critical").length ?? 0;
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
+    <PageContainer>
         <PageHeader title="Wellbeing & Risks" subtitle="Monitor team signals and churn exposure" />
 
         {/* Copilot Summary */}
@@ -332,8 +331,7 @@ const WellbeingRisks = () => {
             })}
           </div>
         )}
-      </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 
