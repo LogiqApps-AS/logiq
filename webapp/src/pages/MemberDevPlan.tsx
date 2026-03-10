@@ -24,7 +24,7 @@ import {
   Spinner,
 } from "@fluentui/react-components";
 import { ArrowTrending20Regular, ArrowTrendingDown20Regular } from "@fluentui/react-icons";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import type { DevGoal, LearningItem, MemberSkill } from "@/lib/api";
 import LearningCardList from "../components/LearningCardList";
 import { toast } from "sonner";
@@ -216,17 +216,17 @@ const MemberDevPlan: React.FC = () => {
 
   if (isLoading) {
     return (
-      <AppShell>
+      <PageContainer>
         <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
           <Spinner label="Loading development plan..." />
         </div>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "1200px", width: "100%", textAlign: "left" }}>
+    <PageContainer maxWidth="1200px">
+      <div style={{ width: "100%", textAlign: "left" }}>
         <PageHeader title="Individual Development Plan" subtitle="Track your growth, learning, and skill development" />
 
         <div className={styles.threeCol}>
@@ -347,44 +347,44 @@ const MemberDevPlan: React.FC = () => {
               })}
           </div>
         </div>
-      </div>
 
-      <Dialog open={!!state.editGoal} onOpenChange={(_, d) => { if (!d.open) dispatch({ type: "CLOSE_EDIT_DIALOG" }); }}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Edit Goal</DialogTitle>
-            <DialogContent>
-              {state.editGoal && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
-                  <div>
-                    <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Goal</Text>
-                    <Text size={300}>{state.editGoal.title}</Text>
+        <Dialog open={!!state.editGoal} onOpenChange={(_, d) => { if (!d.open) dispatch({ type: "CLOSE_EDIT_DIALOG" }); }}>
+          <DialogSurface>
+            <DialogBody>
+              <DialogTitle>Edit Goal</DialogTitle>
+              <DialogContent>
+                {state.editGoal && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Goal</Text>
+                      <Text size={300}>{state.editGoal.title}</Text>
+                    </div>
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Progress: {state.editProgress}%</Text>
+                      <Slider min={0} max={100} step={5} value={state.editProgress} onChange={(_, d) => dispatch({ type: "SET_EDIT_PROGRESS", progress: d.value })} />
+                    </div>
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Status</Text>
+                      <Dropdown value={state.editStatus} selectedOptions={[state.editStatus]} onOptionSelect={(_, d) => dispatch({ type: "SET_EDIT_STATUS", status: d.optionValue || "on-track" })}>
+                        <Option value="on-track">On Track</Option>
+                        <Option value="behind">Behind</Option>
+                        <Option value="completed">Completed</Option>
+                      </Dropdown>
+                    </div>
                   </div>
-                  <div>
-                    <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Progress: {state.editProgress}%</Text>
-                    <Slider min={0} max={100} step={5} value={state.editProgress} onChange={(_, d) => dispatch({ type: "SET_EDIT_PROGRESS", progress: d.value })} />
-                  </div>
-                  <div>
-                    <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "4px" }}>Status</Text>
-                    <Dropdown value={state.editStatus} selectedOptions={[state.editStatus]} onOptionSelect={(_, d) => dispatch({ type: "SET_EDIT_STATUS", status: d.optionValue || "on-track" })}>
-                      <Option value="on-track">On Track</Option>
-                      <Option value="behind">Behind</Option>
-                      <Option value="completed">Completed</Option>
-                    </Dropdown>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <DialogTrigger disableButtonEnhancement>
-                <Button appearance="secondary">Cancel</Button>
-              </DialogTrigger>
-              <Button appearance="primary" onClick={saveEditDialog}>Save</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
-    </AppShell>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <DialogTrigger disableButtonEnhancement>
+                  <Button appearance="secondary">Cancel</Button>
+                </DialogTrigger>
+                <Button appearance="primary" onClick={saveEditDialog}>Save</Button>
+              </DialogActions>
+            </DialogBody>
+          </DialogSurface>
+        </Dialog>
+      </div>
+    </PageContainer>
   );
 };
 

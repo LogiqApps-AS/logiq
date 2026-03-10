@@ -25,7 +25,7 @@ import {
   Info16Regular,
 } from "@fluentui/react-icons";
 import { useState } from "react";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { useRole } from "../contexts/RoleContext";
 
 const useStyles = makeStyles({
@@ -257,7 +257,7 @@ const Settings = () => {
   }, {});
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className={styles.container}>
         <PageHeader title="Settings" subtitle="Configure AI agents, notification channels, and privacy preferences." />
 
@@ -354,7 +354,7 @@ const Settings = () => {
           );
         })}
       </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 

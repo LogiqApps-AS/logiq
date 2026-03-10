@@ -15,7 +15,7 @@ import {
 } from "@fluentui/react-components";
 import { Add20Regular, Dismiss20Regular } from "@fluentui/react-icons";
 import { useState, useMemo, useCallback, useReducer } from "react";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { PlannerKPICards } from "../components/planner/PlannerKPICards";
 import { WeekCalendarStrip } from "../components/planner/WeekCalendarStrip";
 import { MeetingList } from "../components/planner/MeetingList";
@@ -259,7 +259,7 @@ const OneOnOnePlanner = () => {
   };
 
   return (
-    <AppShell>
+    <PageContainer>
       <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
         <PageHeader
           title="1:1 Meeting Planner"
@@ -314,9 +314,8 @@ const OneOnOnePlanner = () => {
           </div>
          </>
         }
-      </div>
 
-      <Dialog open={uiState.showNewDialog} onOpenChange={(_, d) => { if (!d.open) dispatchUI({ type: 'SET_SHOW_NEW_DIALOG', show: false }); }}>
+        <Dialog open={uiState.showNewDialog} onOpenChange={(_, d) => { if (!d.open) dispatchUI({ type: 'SET_SHOW_NEW_DIALOG', show: false }); }}>
         <DialogSurface style={{ maxWidth: "440px", borderRadius: "12px" }}>
           <DialogBody>
             <DialogTitle
@@ -380,8 +379,9 @@ const OneOnOnePlanner = () => {
             </DialogActions>
           </DialogBody>
         </DialogSurface>
-      </Dialog>
-    </AppShell>
+        </Dialog>
+      </div>
+    </PageContainer>
   );
 };
 

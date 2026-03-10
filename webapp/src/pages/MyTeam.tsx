@@ -23,7 +23,7 @@ import {
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import SkillsTab from "../components/SkillsTab";
 import DeliveryTab from "../components/DeliveryTab";
 import { useEmployees } from "../hooks/useApiData";
@@ -164,7 +164,7 @@ const MyTeam = () => {
   const summary = employees ? generateTeamSummary(employees) : null;
 
   return (
-    <AppShell>
+    <PageContainer>
       <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
         <PageHeader title="My Team" subtitle={employees ? `${employees.length} team members` : "Loading..."} />
 
@@ -317,14 +317,14 @@ const MyTeam = () => {
 
         {activeTab === "skills" && <SkillsTab />}
         {activeTab === "delivery" && <DeliveryTab />}
-      </div>
 
-      <AIOverviewDialog
-        open={!!aiEmployee}
-        onClose={() => setAiEmployee(null)}
-        employee={aiEmployee}
-      />
-    </AppShell>
+        <AIOverviewDialog
+          open={!!aiEmployee}
+          onClose={() => setAiEmployee(null)}
+          employee={aiEmployee}
+        />
+      </div>
+    </PageContainer>
   );
 };
 
