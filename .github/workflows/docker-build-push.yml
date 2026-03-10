@@ -6,15 +6,13 @@ on:
       - main
     tags:
       - 'v*.*.*'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
   build-and-push-api:
     name: Build and Push API Image
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -67,6 +65,7 @@ jobs:
   build-and-push-webapp:
     name: Build and Push WebApp Image
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       packages: write
