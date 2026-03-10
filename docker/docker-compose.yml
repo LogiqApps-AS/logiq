@@ -10,17 +10,17 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - Azure__Storage__ConnectionString=${AZURE_STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;}
+      - Azure__Storage__ConnectionString=${AZURE_STORAGE_CONNECTION_STRING}
       - Azure__Storage__EmployeesTable=LogiqEmployees
       - Azure__Storage__SignalsTable=LogiqSignals
       - Azure__Storage__MeetingsTable=LogiqMeetings
       - Azure__Storage__TeamKpiSnapshotsTable=LogiqTeamKpiSnapshots
-      - Azure__OpenAI__Endpoint=${AZURE_OPENAI_ENDPOINT:-}
-      - Azure__OpenAI__ApiKey=${AZURE_OPENAI_API_KEY:-}
-      - Azure__OpenAI__DeploymentName=${AZURE_OPENAI_DEPLOYMENT:-gpt-4}
-      - Azure__Search__Endpoint=${AZURE_SEARCH_ENDPOINT:-}
-      - Azure__Search__ApiKey=${AZURE_SEARCH_API_KEY:-}
-      - Azure__Search__IndexName=${AZURE_SEARCH_INDEX:-logiq-index}
+      - Azure__OpenAI__Endpoint=${AZURE_OPENAI_ENDPOINT}
+      - Azure__OpenAI__ApiKey=${AZURE_OPENAI_API_KEY}
+      - Azure__OpenAI__DeploymentName=${AZURE_OPENAI_DEPLOYMENT}
+      - Azure__Search__Endpoint=${AZURE_SEARCH_ENDPOINT}
+      - Azure__Search__ApiKey=${AZURE_SEARCH_API_KEY}
+      - Azure__Search__IndexName=${AZURE_SEARCH_INDEX}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
