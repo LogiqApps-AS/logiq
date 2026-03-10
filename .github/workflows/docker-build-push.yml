@@ -7,6 +7,12 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      push_images:
+        description: 'Push images to registry'
+        required: false
+        default: true
+        type: boolean
   pull_request:
     branches:
       - main
@@ -54,7 +60,7 @@ jobs:
           context: ./api
           file: ./api/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ (github.event_name == 'workflow_dispatch' && inputs.push_images) || (github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -108,7 +114,7 @@ jobs:
           file: ./webapp/Dockerfile
           target: runner-nginx
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ (github.event_name == 'workflow_dispatch' && inputs.push_images) || (github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
