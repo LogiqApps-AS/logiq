@@ -1,11 +1,15 @@
-using Logiq.Api.Agents;
-using Logiq.Api.Configuration;
-using Logiq.Api.Mcp;
-using Logiq.Api.Services;
-using Logiq.Api.Storage;
-using Scalar.AspNetCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Logiq.Api;
+using Logiq.Api.Agents;
+using Logiq.Api.Agents.Abstracts;
+using Logiq.Api.Configuration;
+using Logiq.Api.Mcp;
+using Logiq.Api.Rag;
+using Logiq.Api.Rag.Abstracts;
+using Logiq.Api.Storage.Repositories;
+using Logiq.Api.Storage.Repositories.Abstracts;
+using Scalar.AspNetCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -17,18 +21,16 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddOpenApi();
-
 builder.Services.Configure<AzureOpenAiOptions>(builder.Configuration.GetSection("Azure:OpenAI"));
 builder.Services.Configure<AzureSearchOptions>(builder.Configuration.GetSection("Azure:Search"));
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Azure:Storage"));
-builder.Services.Configure<McpOptions>(builder.Configuration.GetSection("Mcp"));
 
 string[] corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(opts =>
     opts.AddDefaultPolicy(policy =>
         policy.WithOrigins(corsOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()));
+            .AllowAnyHeader()
+            .AllowAnyMethod()));
 
 builder.Services.AddSingleton<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddSingleton<ISignalRepository, SignalRepository>();
@@ -50,10 +52,10 @@ builder.Services.AddScoped<IPeoplePartnerCopilot, PeoplePartnerCopilot>();
 builder.Services.AddScoped<IDevelopmentCoach, DevelopmentCoach>();
 builder.Services.AddScoped<IAnalyzerOrchestrator, AnalyzerOrchestrator>();
 
-builder.Services.AddSingleton<SeedDataService>();
+builder.Services.AddSingleton<DataSeeder>();
 builder.Services.AddSingleton<IEmbeddingService, EmbeddingService>();
-builder.Services.AddSingleton<IRagService, RagService>();
-builder.Services.AddSingleton<ISearchIndexProvisioningService, SearchIndexProvisioningService>();
+builder.Services.AddSingleton<IRagRetriever, RagRetriever>();
+builder.Services.AddSingleton<IRagIngester, RagIngester>();
 
 builder.Services.AddMcpServer()
     .WithHttpTransport()
@@ -73,10 +75,10 @@ app.MapMcp("/mcp");
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    SeedDataService seeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
+    DataSeeder seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
     await seeder.SeedIfEmptyAsync();
-    ISearchIndexProvisioningService searchProvisioning = scope.ServiceProvider.GetRequiredService<ISearchIndexProvisioningService>();
-    await searchProvisioning.ProvisionAsync();
+    IRagIngester searchProvisioning = scope.ServiceProvider.GetRequiredService<IRagIngester>();
+    await searchProvisioning.IngestAsync();
 }
 
 app.Run();

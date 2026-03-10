@@ -1,5 +1,5 @@
-using Logiq.Api.Models;
-using Logiq.Api.Storage;
+using Logiq.Api.Contracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Logiq.Api.Controllers;
@@ -64,7 +64,8 @@ public sealed class TeamsController(
     [HttpGet("members/{memberId}/detail")]
     [ProducesResponseType<MemberDetail>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMemberDetail(string teamId, string memberId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMemberDetail(string teamId, string memberId,
+        CancellationToken cancellationToken)
     {
         MemberDetail? detail = await memberRepository.GetDetailAsync(teamId, memberId, cancellationToken);
         if (detail is not null)
@@ -75,12 +76,19 @@ public sealed class TeamsController(
             return NotFound();
 
         SkillsMatrix skillsMatrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
-        List<string> skills = (skillsMatrix.EmployeeSkills).TryGetValue(memberId, out List<string>? list) ? list : [];
-        MemberDetail synthesized = new MemberDetail
+        List<string> skills = skillsMatrix.EmployeeSkills.TryGetValue(memberId, out List<string>? list) ? list : [];
+        MemberDetail synthesized = new()
         {
             Department = "Engineering",
             Skills = skills,
-            RoleHistory = [new RoleHistory { Title = employee.Role, Department = "Engineering", Period = "Present", Duration = employee.Tenure, Current = true }],
+            RoleHistory =
+            [
+                new RoleHistory
+                {
+                    Title = employee.Role, Department = "Engineering", Period = "Present", Duration = employee.Tenure,
+                    Current = true
+                }
+            ],
             Projects = [],
             Feedback = [],
             Training = [],

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json;
-using Logiq.Api.Storage;
+using Logiq.Api.Contracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using ModelContextProtocol.Server;
 
 namespace Logiq.Api.Mcp;
@@ -11,13 +12,15 @@ public sealed class HrDataGatewayTools(
     IMeetingRepository meetingRepository)
 {
     [McpServerTool]
-    [Description("Retrieves a full employee profile including KPI scores, churn risk, and engagement metrics by team and employee ID.")]
+    [Description(
+        "Retrieves a full employee profile including KPI scores, churn risk, and engagement metrics by team and employee ID.")]
     public async Task<string> GetEmployeeProfile(
         [Description("The team identifier")] string teamId,
-        [Description("The employee identifier")] string employeeId,
+        [Description("The employee identifier")]
+        string employeeId,
         CancellationToken cancellationToken)
     {
-        var employee = await employeeRepository.GetByIdAsync(teamId, employeeId, cancellationToken);
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, employeeId, cancellationToken);
         return JsonSerializer.Serialize(employee);
     }
 
@@ -27,17 +30,18 @@ public sealed class HrDataGatewayTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         return JsonSerializer.Serialize(employees);
     }
 
     [McpServerTool]
-    [Description("Lists all absences and sick leave records for employees in a team, including sick days and sick leave rates.")]
+    [Description(
+        "Lists all absences and sick leave records for employees in a team, including sick days and sick leave rates.")]
     public async Task<string> ListAbsences(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var absences = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -55,7 +59,7 @@ public sealed class HrDataGatewayTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var orgNodes = employees.Select(e => new
         {
             id = e.Id,
@@ -73,17 +77,19 @@ public sealed class HrDataGatewayTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var meetings = await meetingRepository.ListUpcomingAsync(teamId, cancellationToken);
+        IReadOnlyList<Meeting> meetings = await meetingRepository.ListUpcomingAsync(teamId, cancellationToken);
         return JsonSerializer.Serialize(meetings);
     }
 
     [McpServerTool]
-    [Description("Returns deferred topics across all 1:1 meetings for a team — items that were postponed and need follow-up.")]
+    [Description(
+        "Returns deferred topics across all 1:1 meetings for a team — items that were postponed and need follow-up.")]
     public async Task<string> GetDeferredTopics(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var topics = await meetingRepository.ListDeferredTopicsAsync(teamId, cancellationToken);
+        IReadOnlyList<DeferredTopic>
+            topics = await meetingRepository.ListDeferredTopicsAsync(teamId, cancellationToken);
         return JsonSerializer.Serialize(topics);
     }
 }

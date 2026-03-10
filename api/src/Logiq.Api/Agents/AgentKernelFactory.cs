@@ -1,13 +1,9 @@
+using Logiq.Api.Agents.Abstracts;
 using Logiq.Api.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 
 namespace Logiq.Api.Agents;
-
-public interface IAgentKernelFactory
-{
-    Kernel CreateKernel();
-}
 
 public sealed class AgentKernelFactory(IOptions<AzureOpenAiOptions> openAiOptions) : IAgentKernelFactory
 {

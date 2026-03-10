@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json;
-using Logiq.Api.Storage;
+using Logiq.Api.Contracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using ModelContextProtocol.Server;
 
 namespace Logiq.Api.Mcp;
@@ -11,12 +12,13 @@ public sealed class LearningSkillsTools(
     IMemberRepository memberRepository)
 {
     [McpServerTool]
-    [Description("Returns training records for all team members including completed courses, hours, and certification progress.")]
+    [Description(
+        "Returns training records for all team members including completed courses, hours, and certification progress.")]
     public async Task<string> GetTrainingRecords(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var records = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -34,7 +36,7 @@ public sealed class LearningSkillsTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var goals = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -51,7 +53,7 @@ public sealed class LearningSkillsTools(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
+        SkillsMatrix matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
         return JsonSerializer.Serialize(matrix);
     }
 
@@ -59,11 +61,12 @@ public sealed class LearningSkillsTools(
     [Description("Returns skill coverage percentage and skills data for a specific team member.")]
     public async Task<string> GetMemberSkillProfile(
         [Description("The team identifier")] string teamId,
-        [Description("The employee identifier")] string memberId,
+        [Description("The employee identifier")]
+        string memberId,
         CancellationToken cancellationToken)
     {
-        var employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
-        var dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
+        MemberDashboard? dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
         var result = new
         {
             employeeId = memberId,

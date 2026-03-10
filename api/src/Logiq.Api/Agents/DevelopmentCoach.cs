@@ -1,58 +1,55 @@
-using Logiq.Api.Models;
-using Logiq.Api.Services;
-using Logiq.Api.Storage;
+﻿using Logiq.Api.Agents.Abstracts;
+using Logiq.Api.Contracts;
+using Logiq.Api.Rag.Abstracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Logiq.Api.Agents;
 
-public interface IDevelopmentCoach
-{
-    Task<ChatResponse> ChatAsync(string memberId, ChatRequest request, CancellationToken cancellationToken = default);
-}
-
 public sealed class DevelopmentCoach(
     IAgentKernelFactory kernelFactory,
-    IRagService ragService,
+    IRagRetriever ragRetriever,
     IEmployeeRepository employeeRepository,
     IMemberRepository memberRepository,
     ILogger<DevelopmentCoach> logger) : IDevelopmentCoach
 {
     private const string AgentInstructions = """
-        You are the Development Coach for Logiq — a supportive, expert AI coach for individual contributors and team members.
+                                             You are the Development Coach for LogIQ — a supportive, expert AI coach for individual contributors and team members.
 
-        Your role:
-        - Help members understand their growth trajectory and development opportunities
-        - Provide personalised guidance for 1:1 preparation and self-advocacy
-        - Suggest learning resources and career development actions
-        - Help members articulate their goals and concerns constructively
+                                             Your role:
+                                             - Help members understand their growth trajectory and development opportunities
+                                             - Provide personalised guidance for 1:1 preparation and self-advocacy
+                                             - Suggest learning resources and career development actions
+                                             - Help members articulate their goals and concerns constructively
 
-        You have access to:
-        - The member's KPIs, signals, development goals, and skill profile
-        - Their upcoming 1:1 preparation brief with suggested topics
-        - Career development best practices via knowledge base
+                                             You have access to:
+                                             - The member's KPIs, signals, development goals, and skill profile
+                                             - Their upcoming 1:1 preparation brief with suggested topics
+                                             - Career development best practices via knowledge base
 
-        Coaching principles:
-        - Be encouraging but honest — growth requires honest feedback
-        - Focus on what the member can control and influence
-        - Help them frame concerns as opportunities rather than complaints
-        - Be specific — generic advice is not helpful
+                                             Coaching principles:
+                                             - Be encouraging but honest — growth requires honest feedback
+                                             - Focus on what the member can control and influence
+                                             - Help them frame concerns as opportunities rather than complaints
+                                             - Be specific — generic advice is not helpful
 
-        Always end with 2-3 actionable next steps the member can take this week.
-        """;
+                                             Always end with 2-3 actionable next steps the member can take this week.
+                                             """;
 
-    public async Task<ChatResponse> ChatAsync(string memberId, ChatRequest request, CancellationToken cancellationToken = default)
+    public async Task<ChatResponse> ChatAsync(string memberId, ChatRequest request,
+        CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Development Coach processing message for member {MemberId}", memberId);
 
         string teamId = request.TeamId ?? "team1";
         Employee? employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
         MemberDashboard? dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
-        string ragContext = await ragService.RetrieveContextAsync(request.Message, 5, cancellationToken);
+        string ragContext = await ragRetriever.RetrieveAsync(request.Message, 5, cancellationToken);
 
         Kernel kernel = kernelFactory.CreateKernel();
-        ChatCompletionAgent agent = new ChatCompletionAgent
+        ChatCompletionAgent agent = new()
         {
             Name = "DevelopmentCoach",
             Instructions = BuildMemberContext(employee, dashboard, ragContext),
@@ -60,7 +57,7 @@ public sealed class DevelopmentCoach(
         };
 
         string conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
-        AgentGroupChat chat = new AgentGroupChat(agent);
+        AgentGroupChat chat = new(agent);
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, request.Message));
 
         string reply = string.Empty;
@@ -79,43 +76,45 @@ public sealed class DevelopmentCoach(
     {
         if (employee is null) return AgentInstructions;
 
-        var goalsInProgress = dashboard?.DevGoals.Where(g => g.Status != "completed").ToList() ?? [];
-        var topGoal = goalsInProgress.FirstOrDefault();
+        List<DevGoal> goalsInProgress = dashboard?.DevGoals.Where(g => g.Status != "completed").ToList() ?? [];
+        DevGoal? topGoal = goalsInProgress.FirstOrDefault();
 
         return $"""
-            {AgentInstructions}
+                {AgentInstructions}
 
-            MEMBER PROFILE:
-            Name: {employee.Name}
-            Role: {employee.Role}
-            Tenure: {employee.Tenure}
+                MEMBER PROFILE:
+                Name: {employee.Name}
+                Role: {employee.Role}
+                Tenure: {employee.Tenure}
 
-            CURRENT KPIs:
-            Wellbeing: {employee.Wellbeing.Score}% ({employee.Wellbeing.Status})
-            Skills: {employee.Skills.Score}% ({employee.Skills.Status})
-            Motivation: {employee.Motivation.Score}% ({employee.Motivation.Status})
-            Delivery: {employee.Delivery.Score}% ({employee.Delivery.Status})
+                CURRENT KPIs:
+                Wellbeing: {employee.Wellbeing.Score}% ({employee.Wellbeing.Status})
+                Skills: {employee.Skills.Score}% ({employee.Skills.Status})
+                Motivation: {employee.Motivation.Score}% ({employee.Motivation.Status})
+                Delivery: {employee.Delivery.Score}% ({employee.Delivery.Status})
 
-            DEVELOPMENT CONTEXT:
-            IDP Progress: {employee.IdpGoalProgress:P0}
-            Skills Coverage: {employee.SkillsCoverage:P0}
-            Top Goal: {topGoal?.Title ?? "None set"} ({topGoal?.Progress ?? 0}% progress)
+                DEVELOPMENT CONTEXT:
+                IDP Progress: {employee.IdpGoalProgress:P0}
+                Skills Coverage: {employee.SkillsCoverage:P0}
+                Top Goal: {topGoal?.Title ?? "None set"} ({topGoal?.Progress ?? 0}% progress)
 
-            UPCOMING 1:1 PREP TOPICS:
-            {string.Join("\n", dashboard?.PrepTopics ?? ["No topics prepared"])}
+                UPCOMING 1:1 PREP TOPICS:
+                {string.Join("\n", dashboard?.PrepTopics ?? ["No topics prepared"])}
 
-            RELEVANT KNOWLEDGE:
-            {ragContext}
-            """;
+                RELEVANT KNOWLEDGE:
+                {ragContext}
+                """;
     }
 
     private static List<ChatSuggestion> ExtractSuggestions(MemberDashboard? dashboard) =>
     [
-        new() { Text = "Help me prepare talking points for my 1:1" },
-        new() { Text = "What should I prioritise for my development this month?" },
+        new() {Text = "Help me prepare talking points for my 1:1"},
+        new() {Text = "What should I prioritise for my development this month?"},
         new()
-        { Text = dashboard?.DevGoals.FirstOrDefault()?.Title is { } goalTitle
-            ? $"How do I make progress on '{goalTitle}'?"
-            : "How do I set effective development goals?" }
+        {
+            Text = dashboard?.DevGoals.FirstOrDefault()?.Title is { } goalTitle
+                ? $"How do I make progress on '{goalTitle}'?"
+                : "How do I set effective development goals?"
+        }
     ];
 }

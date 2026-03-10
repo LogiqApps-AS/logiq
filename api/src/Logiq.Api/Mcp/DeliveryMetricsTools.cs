@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json;
-using Logiq.Api.Storage;
+using Logiq.Api.Contracts;
+using Logiq.Api.Storage.Repositories.Abstracts;
 using ModelContextProtocol.Server;
 
 namespace Logiq.Api.Mcp;
@@ -9,12 +10,13 @@ namespace Logiq.Api.Mcp;
 public sealed class DeliveryMetricsTools(IEmployeeRepository employeeRepository)
 {
     [McpServerTool]
-    [Description("Returns sprint summary metrics for all team members including task completion, velocity, and story points.")]
+    [Description(
+        "Returns sprint summary metrics for all team members including task completion, velocity, and story points.")]
     public async Task<string> GetSprintSummary(
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var sprintData = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -33,7 +35,7 @@ public sealed class DeliveryMetricsTools(IEmployeeRepository employeeRepository)
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var prMetrics = employees.Select(e => new
         {
             employeeId = e.Id,
@@ -50,7 +52,7 @@ public sealed class DeliveryMetricsTools(IEmployeeRepository employeeRepository)
         [Description("The team identifier")] string teamId,
         CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         var meetingData = employees.Select(e => new
         {
             employeeId = e.Id,
