@@ -11,6 +11,7 @@ import {
   Tab,
   ProgressBar,
   Spinner,
+  Persona,
 } from "@fluentui/react-components";
 import { AISummaryCard, InsightItem } from "../components/AISummaryCard";
 import {
@@ -32,9 +33,11 @@ import {
 import { useState } from "react";
 import { PageContainer } from "../components/PageContainer";
 import { CopilotInsightsDialog } from "../components/CopilotInsightsDialog";
+import { AIOverviewDialog } from "../components/AIOverviewDialog";
 import { useNavigate } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
 import { useEmployees, useSignals } from "../hooks/useApiData";
+import type { Employee } from "@/lib/api";
 import {
   ErrorState,
   SkeletonBlock,
@@ -98,6 +101,7 @@ const WellbeingRisks = () => {
   const styles = useStyles();
   const [activeTab, setActiveTab] = useTabParam("churn");
   const [insightsOpen, setInsightsOpen] = useState(false);
+  const [aiEmployee, setAiEmployee] = useState<Employee | null>(null);
   const navigate = useNavigate();
 
   const { data: employees, isLoading: empLoading, isError: empError, refetch: refetchEmp } = useEmployees();
@@ -242,15 +246,16 @@ const WellbeingRisks = () => {
                   {sorted.map((emp) => {
                     const isHighRisk = emp.churnPercent >= 60;
                     return (
-                      <tr key={emp.id}>
+                      <tr key={emp.id} onClick={() => setAiEmployee(emp)} style={{ cursor: "pointer" }}>
                         <td className={styles.td}>
                           <div className={styles.nameCell}>
                             {isHighRisk && <Warning16Filled className={styles.warningIcon} />}
-                            <div>
-                              <Text weight="semibold" size={300}>{emp.name}</Text>
-                              <br />
-                              <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>{emp.role}</Text>
-                            </div>
+                            <Persona
+                              name={emp.name}
+                              secondaryText={emp.role}
+                              size="small"
+                              avatar={{ color: isHighRisk ? "cranberry" : "brand" }}
+                            />
                           </div>
                         </td>
                         <td className={styles.td}>
@@ -293,7 +298,20 @@ const WellbeingRisks = () => {
                   <div className={styles.signalFooter}>
                     <Text size={200} style={{ color: tokens.colorNeutralForeground4 }}>{signal.time}</Text>
                     {signal.actionLabel && (
-                      <Button appearance="transparent" size="small" icon={<ArrowRight16Regular />} iconPosition="after" style={{ color: "#0f6cbd" }}>
+                      <Button 
+                        appearance="transparent" 
+                        size="small" 
+                        icon={<ArrowRight16Regular />} 
+                        iconPosition="after" 
+                        style={{ color: "#0f6cbd" }}
+                        onClick={() => {
+                          if (signal.action === "profile" && signal.employeeId) navigate(`/dashboard/teams/1/members/${signal.employeeId}`);
+                          else if (signal.action === "prep") navigate("/dashboard/prep");
+                          else if (signal.action === "rebalance" && signal.employeeId) navigate(`/dashboard/teams/1/members/${signal.employeeId}`);
+                          else if (signal.action === "wellbeing") navigate("/dashboard/wellbeing");
+                          else if (signal.action === "survey") navigate("/dashboard/settings");
+                        }}
+                      >
                         {signal.actionLabel}
                       </Button>
                     )}
@@ -303,6 +321,12 @@ const WellbeingRisks = () => {
             })}
           </div>
         )}
+
+        <AIOverviewDialog
+          open={!!aiEmployee}
+          onClose={() => setAiEmployee(null)}
+          employee={aiEmployee}
+        />
     </PageContainer>
   );
 };

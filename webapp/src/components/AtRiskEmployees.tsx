@@ -65,7 +65,7 @@ export const AtRiskEmployees: React.FC<AtRiskEmployeesProps> = ({ employees }) =
           icon={<ArrowRight16Regular />}
           iconPosition="after"
           style={{ color: "#0f6cbd" }}
-          onClick={() => navigate("/team")}
+          onClick={() => navigate("/dashboard/team")}
         >
           View Team
         </Button>
@@ -137,7 +137,7 @@ export const AtRiskEmployees: React.FC<AtRiskEmployeesProps> = ({ employees }) =
               icon={<ArrowRight16Regular />}
               iconPosition="after"
               style={{ color: "#0f6cbd" }}
-              onClick={() => navigate("/prep")}
+              onClick={() => navigate("/dashboard/prep")}
             >
               Prepare 1:1
             </Button>

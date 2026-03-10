@@ -185,7 +185,7 @@ export const InsightsRecommendations: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <Sparkle20Filled className={styles.copilotIcon} />
-        <Text size={500} weight="bold">LogIQ Insights & Recommendations</Text>
+        <Text size={500} weight="bold">LogIQ™ Insights & Recommendations</Text>
         <span className={styles.badge}>AI Generated</span>
       </div>
 

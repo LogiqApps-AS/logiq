@@ -128,6 +128,40 @@ const useStyles = makeStyles({
       backgroundColor: tokens.colorNeutralBackground1Hover,
     },
   },
+  roleSwitcher: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    padding: "12px 20px",
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+  },
+  roleSwitcherButtons: {
+    display: "flex",
+    gap: "8px",
+  },
+  roleButton: {
+    flex: 1,
+    padding: "6px 12px",
+    borderRadius: "6px",
+    border: `1px solid ${tokens.colorNeutralStroke1}`,
+    backgroundColor: tokens.colorNeutralBackground1,
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "500",
+    color: tokens.colorNeutralForeground2,
+    textAlign: "center",
+    ":hover": {
+      backgroundColor: tokens.colorNeutralBackground1Hover,
+    },
+  },
+  roleButtonActive: {
+    backgroundColor: tokens.colorBrandBackground,
+    color: tokens.colorNeutralForegroundOnBrand,
+    borderColor: tokens.colorBrandBackground,
+    ":hover": {
+      backgroundColor: tokens.colorBrandBackgroundHover,
+    },
+  },
   itemLeft: {
     display: "flex",
     alignItems: "center",
@@ -171,7 +205,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
   const styles = useStyles();
   const navigate = useNavigate();
   const location = useLocation();
-  const { role } = useRole();
+  const { role, setRole } = useRole();
 
   const userName = role === "member" ? "Alex Chen" : "Magnus Lindqvist";
   const userTitle = role === "member" ? "Mid Developer" : "Team Lead";
@@ -298,6 +332,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
                 <div className={styles.viewAccount} style={{ marginLeft: 'auto', alignSelf: 'flex-start', marginTop: '8px' }}>
                   <Text size={300}>View account</Text>
                   <Open20Regular style={{ fontSize: "14px" }} />
+                </div>
+              </div>
+
+              {/* Role Switcher */}
+              <div className={styles.roleSwitcher}>
+                <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>Switch role</Text>
+                <div className={styles.roleSwitcherButtons}>
+                  <button
+                    className={role === "lead" ? `${styles.roleButton} ${styles.roleButtonActive}` : styles.roleButton}
+                    onClick={() => setRole("lead")}
+                  >
+                    Team Lead
+                  </button>
+                  <button
+                    className={role === "member" ? `${styles.roleButton} ${styles.roleButtonActive}` : styles.roleButton}
+                    onClick={() => setRole("member")}
+                  >
+                    Member
+                  </button>
                 </div>
               </div>
 
