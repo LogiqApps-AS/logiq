@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 env:
   REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
