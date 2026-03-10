@@ -12,7 +12,7 @@ jobs:
   build-and-push-api:
     name: Build and Push API Image
     runs-on: ubuntu-latest
-    environment: production
+    environment: Env
     permissions:
       contents: read
       packages: write
