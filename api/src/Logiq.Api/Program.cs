@@ -3,12 +3,11 @@ using Logiq.Api.Configuration;
 using Logiq.Api.Mcp;
 using Logiq.Api.Services;
 using Logiq.Api.Storage;
-using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
@@ -24,7 +23,7 @@ builder.Services.Configure<AzureSearchOptions>(builder.Configuration.GetSection(
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Azure:Storage"));
 builder.Services.Configure<McpOptions>(builder.Configuration.GetSection("Mcp"));
 
-var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+string[] corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(opts =>
     opts.AddDefaultPolicy(policy =>
         policy.WithOrigins(corsOrigins)
@@ -52,6 +51,7 @@ builder.Services.AddScoped<IDevelopmentCoach, DevelopmentCoach>();
 builder.Services.AddScoped<IAnalyzerOrchestrator, AnalyzerOrchestrator>();
 
 builder.Services.AddSingleton<SeedDataService>();
+builder.Services.AddSingleton<IEmbeddingService, EmbeddingService>();
 builder.Services.AddSingleton<IRagService, RagService>();
 builder.Services.AddSingleton<ISearchIndexProvisioningService, SearchIndexProvisioningService>();
 
@@ -62,7 +62,7 @@ builder.Services.AddMcpServer()
     .WithTools<LearningSkillsTools>()
     .WithTools<WellbeingSignalsTools>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.MapOpenApi();
 app.MapScalarApiReference();
@@ -71,11 +71,11 @@ app.UseCors();
 app.MapControllers();
 app.MapMcp("/mcp");
 
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
+    SeedDataService seeder = scope.ServiceProvider.GetRequiredService<SeedDataService>();
     await seeder.SeedIfEmptyAsync();
-    var searchProvisioning = scope.ServiceProvider.GetRequiredService<ISearchIndexProvisioningService>();
+    ISearchIndexProvisioningService searchProvisioning = scope.ServiceProvider.GetRequiredService<ISearchIndexProvisioningService>();
     await searchProvisioning.ProvisionAsync();
 }
 

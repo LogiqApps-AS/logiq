@@ -1,7 +1,6 @@
 using Logiq.Api.Models;
 using Logiq.Api.Services;
 using Logiq.Api.Storage;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -47,25 +46,25 @@ public sealed class DevelopmentCoach(
     {
         logger.LogInformation("Development Coach processing message for member {MemberId}", memberId);
 
-        var teamId = request.TeamId ?? "team1";
-        var employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
-        var dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
-        var ragContext = await ragService.RetrieveContextAsync(request.Message, 5, cancellationToken);
+        string teamId = request.TeamId ?? "team1";
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
+        MemberDashboard? dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
+        string ragContext = await ragService.RetrieveContextAsync(request.Message, 5, cancellationToken);
 
-        var kernel = kernelFactory.CreateKernel();
-        var agent = new ChatCompletionAgent
+        Kernel kernel = kernelFactory.CreateKernel();
+        ChatCompletionAgent agent = new ChatCompletionAgent
         {
             Name = "DevelopmentCoach",
             Instructions = BuildMemberContext(employee, dashboard, ragContext),
             Kernel = kernel
         };
 
-        var conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
-        var chat = new AgentGroupChat(agent);
+        string conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
+        AgentGroupChat chat = new AgentGroupChat(agent);
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, request.Message));
 
-        var reply = string.Empty;
-        await foreach (var message in chat.InvokeAsync(cancellationToken))
+        string reply = string.Empty;
+        await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
             reply += message.Content;
 
         return new ChatResponse
@@ -112,9 +111,10 @@ public sealed class DevelopmentCoach(
 
     private static List<ChatSuggestion> ExtractSuggestions(MemberDashboard? dashboard) =>
     [
-        new ChatSuggestion { Text = "Help me prepare talking points for my 1:1" },
-        new ChatSuggestion { Text = "What should I prioritise for my development this month?" },
-        new ChatSuggestion { Text = dashboard?.DevGoals.FirstOrDefault()?.Title is string goalTitle
+        new() { Text = "Help me prepare talking points for my 1:1" },
+        new() { Text = "What should I prioritise for my development this month?" },
+        new()
+        { Text = dashboard?.DevGoals.FirstOrDefault()?.Title is { } goalTitle
             ? $"How do I make progress on '{goalTitle}'?"
             : "How do I set effective development goals?" }
     ];

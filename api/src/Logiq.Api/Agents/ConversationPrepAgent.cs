@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Logiq.Api.Mcp;
 using Logiq.Api.Storage;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;

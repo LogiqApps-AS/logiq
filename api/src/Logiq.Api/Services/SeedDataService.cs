@@ -1,6 +1,5 @@
 using Logiq.Api.Models;
 using Logiq.Api.Storage;
-using Microsoft.Extensions.Logging;
 
 namespace Logiq.Api.Services;
 

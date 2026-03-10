@@ -18,15 +18,15 @@ public sealed class MembersController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDashboard(string memberId, [FromQuery] string teamId = "team1", CancellationToken cancellationToken = default)
     {
-        var dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
+        MemberDashboard? dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
         if (dashboard is not null) return Ok(dashboard);
 
-        var employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
         if (employee is null) return NotFound();
 
-        var matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
-        var skills = (matrix.EmployeeSkills ?? new Dictionary<string, List<string>>()).TryGetValue(memberId, out var list) ? list : new List<string>();
-        var synthesized = new MemberDashboard
+        SkillsMatrix matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
+        List<string> skills = (matrix.EmployeeSkills).TryGetValue(memberId, out var list) ? list : [];
+        MemberDashboard synthesized = new()
         {
             EmployeeId = memberId,
             Kpis = new MemberKpis
@@ -54,7 +54,7 @@ public sealed class MembersController(
     [ProducesResponseType<IReadOnlyList<MemberSignal>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMemberSignals(string memberId, [FromQuery] string teamId = "team1", CancellationToken cancellationToken = default)
     {
-        var signals = await signalRepository.ListMemberSignalsAsync(teamId, memberId, cancellationToken);
+        IReadOnlyList<MemberSignal> signals = await signalRepository.ListMemberSignalsAsync(teamId, memberId, cancellationToken);
         return Ok(signals);
     }
 
@@ -62,8 +62,8 @@ public sealed class MembersController(
     [ProducesResponseType<ConversationPrep>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPrep(string memberId, [FromQuery] string teamId = "team1", CancellationToken cancellationToken = default)
     {
-        var prep = await orchestrator.PrepareConversationAsync(teamId, memberId, cancellationToken);
-        
+        ConversationPrep prep = await orchestrator.PrepareConversationAsync(teamId, memberId, cancellationToken);
+
         return Ok(prep);
     }
 
@@ -75,15 +75,15 @@ public sealed class MembersController(
         [FromQuery] string teamId = "team1",
         CancellationToken cancellationToken = default)
     {
-        var dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
+        MemberDashboard? dashboard = await memberRepository.GetDashboardAsync(teamId, memberId, cancellationToken);
         if (dashboard is not null) return Ok(dashboard);
 
-        var employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
         if (employee is null) return NotFound();
 
-        var matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
-        var skills = (matrix.EmployeeSkills ?? new Dictionary<string, List<string>>()).TryGetValue(memberId, out var list) ? list : new List<string>();
-        var synthesized = new MemberDashboard
+        SkillsMatrix matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
+        List<string> skills = (matrix.EmployeeSkills).TryGetValue(memberId, out List<string>? list) ? list : [];
+        MemberDashboard synthesized = new MemberDashboard
         {
             EmployeeId = memberId,
             Kpis = new MemberKpis { Wellbeing = employee.Wellbeing, Skills = employee.Skills, Motivation = employee.Motivation, Delivery = employee.Delivery },
@@ -108,7 +108,7 @@ public sealed class MembersController(
         [FromQuery] string teamId = "team1",
         CancellationToken cancellationToken = default)
     {
-        var signals = await signalRepository.ListMemberSignalsAsync(teamId, memberId, cancellationToken);
+        IReadOnlyList<MemberSignal> signals = await signalRepository.ListMemberSignalsAsync(teamId, memberId, cancellationToken);
         return Ok(signals);
     }
 }
