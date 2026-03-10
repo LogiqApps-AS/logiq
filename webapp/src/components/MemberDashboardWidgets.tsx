@@ -8,27 +8,18 @@ import {
 } from "@fluentui/react-components";
 import {
   Sparkle20Filled,
-  ArrowTrendingDown20Regular,
-  ArrowTrending20Regular,
   Warning20Regular,
   Checkmark20Regular,
   Info20Regular,
   Clock20Regular,
-  BookOpen20Regular,
 } from "@fluentui/react-icons";
-import {
-  memberKPIs,
-  memberSignals,
-  devPlanGoals,
-  learningItems,
-  weeklyStats,
-  memberDeliveryStats,
-  sprintContributions,
-} from "../data/memberDashboardData";
 import { PageHeader } from "./PageHeader";
 import { useNavigate } from "react-router-dom";
 import LearningCardList from "./LearningCardList";
 import { useAICoach } from "../contexts/AICoachContext";
+import { useMemberDashboard, useMemberSignals } from "../hooks/useApiData";
+
+const DEFAULT_MEMBER_ID = "1";
 
 const useStyles = makeStyles({
   header: {
@@ -108,13 +99,40 @@ const MemberDashboardWidgets: React.FC = () => {
   const styles = useStyles();
   const navigate = useNavigate();
   const { openAICoach } = useAICoach();
+  const { data: dashboard, isLoading: dashboardLoading, isError: dashboardError } = useMemberDashboard(DEFAULT_MEMBER_ID);
+  const { data: signals = [] } = useMemberSignals(DEFAULT_MEMBER_ID);
 
-  const kpis = [
-    { label: "Well-being", ...memberKPIs.wellbeing },
-    { label: "Skills", ...memberKPIs.skills },
-    { label: "Motivation", ...memberKPIs.motivation },
-    { label: "Delivery", ...memberKPIs.delivery },
-  ];
+  const kpis = dashboard?.kpis
+    ? [
+        { label: "Well-being", score: dashboard.kpis.wellbeing?.score ?? 0, status: dashboard.kpis.wellbeing?.status ?? "green" },
+        { label: "Skills", score: dashboard.kpis.skills?.score ?? 0, status: dashboard.kpis.skills?.status ?? "green" },
+        { label: "Motivation", score: dashboard.kpis.motivation?.score ?? 0, status: dashboard.kpis.motivation?.status ?? "green" },
+        { label: "Delivery", score: dashboard.kpis.delivery?.score ?? 0, status: dashboard.kpis.delivery?.status ?? "green" },
+      ]
+    : [];
+
+  if (dashboardLoading) {
+    return (
+      <>
+        <PageHeader title="Your Dashboard" subtitle="Personal intelligence and growth insights" />
+        <Text>Loading...</Text>
+      </>
+    );
+  }
+  if (dashboardError || !dashboard) {
+    return (
+      <>
+        <PageHeader title="Your Dashboard" subtitle="Personal intelligence and growth insights" />
+        <Text>Unable to load dashboard.</Text>
+      </>
+    );
+  }
+
+  const devGoals = dashboard.devGoals ?? [];
+  const learningItems = dashboard.learningItems ?? [];
+  const deliveryStats = dashboard.deliveryStats;
+  const sprintContributions = dashboard.sprintContributions ?? [];
+  const memberSignalsList = signals.length > 0 ? signals : (dashboard.signals ?? []);
 
   return (
     <>
@@ -132,22 +150,17 @@ const MemberDashboardWidgets: React.FC = () => {
       {/* KPI Cards */}
       <div className={styles.kpiRow}>
         {kpis.map((kpi) => {
-          const c = kpiColors[kpi.status];
-          const isUp = kpi.trend > 0;
+          const c = kpiColors[kpi.status] ?? kpiColors.green;
           return (
             <Card key={kpi.label} className={styles.kpiCard} style={{ borderLeft: `4px solid ${c.border}` }}>
               <div className={styles.kpiLabel}>
                 <Text size={300} style={{ color: tokens.colorNeutralForeground3 }}>{kpi.label}</Text>
                 <span className={styles.statusBadge} style={{ backgroundColor: c.badgeBg, color: c.badge }}>
-                  {kpi.status.toUpperCase()}
+                  {(kpi.status ?? "green").toUpperCase()}
                 </span>
               </div>
               <div>
                 <span className={styles.kpiScore} style={{ color: c.score }}>{kpi.score}</span>
-                <span className={styles.kpiTrend} style={{ color: isUp ? "#107c41" : "#d13438" }}>
-                  {isUp ? <ArrowTrending20Regular style={{ fontSize: 14 }} /> : <ArrowTrendingDown20Regular style={{ fontSize: 14 }} />}
-                  {isUp ? "+" : ""}{kpi.trend}%
-                </span>
               </div>
             </Card>
           );
@@ -161,8 +174,8 @@ const MemberDashboardWidgets: React.FC = () => {
             <Text size={500} weight="bold">Your Signals</Text>
             <Button appearance="transparent" size="small" style={{ color: "#5b5fc7" }} onClick={() => navigate("/signals")}>View All</Button>
           </div>
-          {memberSignals.map((signal) => {
-            const si = signalIcons[signal.type];
+          {memberSignalsList.map((signal) => {
+            const si = signalIcons[signal.type ?? "wellbeing"] ?? signalIcons.wellbeing;
             return (
               <Card key={signal.id} className={styles.signalCard}>
                 <div className={styles.signalRow}>
@@ -186,18 +199,18 @@ const MemberDashboardWidgets: React.FC = () => {
             <Text size={500} weight="bold">Development Plan</Text>
             <Button appearance="transparent" size="small" style={{ color: "#5b5fc7" }} onClick={() => navigate("/devplan")}>View Full IDP</Button>
           </div>
-          {devPlanGoals.map((goal) => {
-            const sc = statusColors[goal.status];
+          {devGoals.map((goal) => {
+            const sc = statusColors[goal.status ?? "on-track"] ?? statusColors["on-track"];
             return (
               <Card key={goal.id} className={styles.goalCard}>
                 <div className={styles.goalHeader}>
                   <Text weight="semibold" size={300}>{goal.title}</Text>
-                  <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", backgroundColor: sc.bg, color: sc.color }}>{goal.status}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", backgroundColor: sc.bg, color: sc.color }}>{goal.status ?? "on-track"}</span>
                 </div>
-                <ProgressBar value={goal.progress / 100} thickness="large" color="brand" style={{ marginBottom: "6px" }} />
+                <ProgressBar value={(goal.progress ?? 0) / 100} thickness="large" color="brand" style={{ marginBottom: "6px" }} />
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>{goal.category}</Text>
-                  <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>{goal.progress}%</Text>
+                  <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>{goal.progress ?? 0}%</Text>
                 </div>
               </Card>
             );
@@ -216,15 +229,15 @@ const MemberDashboardWidgets: React.FC = () => {
             </div>
             <div className={styles.weekGrid}>
               <div>
-                <div className={styles.weekValue} style={{ color: "#f7630c" }}>{weeklyStats.hoursWorked}h</div>
+                <div className={styles.weekValue} style={{ color: "#f7630c" }}>{(deliveryStats?.hoursThisWeek ?? 0)}h</div>
                 <Text size={100} style={{ color: tokens.colorNeutralForeground3, textTransform: "uppercase", letterSpacing: "0.5px" }}>HOURS WORKED</Text>
               </div>
               <div>
-                <div className={styles.weekValue} style={{ color: "#5b5fc7" }}>{weeklyStats.meetingHours}h</div>
+                <div className={styles.weekValue} style={{ color: "#5b5fc7" }}>{deliveryStats?.meetingHours ?? 0}h</div>
                 <Text size={100} style={{ color: tokens.colorNeutralForeground3, textTransform: "uppercase", letterSpacing: "0.5px" }}>IN MEETINGS</Text>
               </div>
               <div>
-                <div className={styles.weekValue} style={{ color: "#107c41" }}>{weeklyStats.prsMerged}</div>
+                <div className={styles.weekValue} style={{ color: "#107c41" }}>{deliveryStats?.prsMerged ?? 0}</div>
                 <Text size={100} style={{ color: tokens.colorNeutralForeground3, textTransform: "uppercase", letterSpacing: "0.5px" }}>PRS MERGED</Text>
               </div>
             </div>
@@ -239,10 +252,10 @@ const MemberDashboardWidgets: React.FC = () => {
         </div>
         <div className={styles.kpiRow}>
           {[
-            { label: "Hours This Week", value: `${memberDeliveryStats.hoursThisWeek}h`, color: "#f7630c" },
-            { label: "PRs Merged", value: String(memberDeliveryStats.prsMerged), color: "#5b5fc7" },
-            { label: "Tasks Completed", value: String(memberDeliveryStats.tasksCompleted), color: "#107c41" },
-            { label: "Meeting Hours", value: `${memberDeliveryStats.meetingHours}h`, color: "#d13438" },
+            { label: "Hours This Week", value: `${deliveryStats?.hoursThisWeek ?? 0}h`, color: "#f7630c" },
+            { label: "PRs Merged", value: String(deliveryStats?.prsMerged ?? 0), color: "#5b5fc7" },
+            { label: "Tasks Completed", value: String(deliveryStats?.tasksCompleted ?? 0), color: "#107c41" },
+            { label: "Meeting Hours", value: `${deliveryStats?.meetingHours ?? 0}h`, color: "#d13438" },
           ].map((stat) => (
             <Card key={stat.label} style={{ padding: "16px 20px", textAlign: "center" }}>
               <div className={styles.kpiScore} style={{ color: stat.color, fontSize: "28px" }}>{stat.value}</div>

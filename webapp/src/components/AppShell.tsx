@@ -58,7 +58,8 @@ import { AICoachPanel } from "./AICoachPanel";
 import { useRole } from "../contexts/RoleContext";
 import { useCopilot } from "../contexts/CopilotContext";
 import { useAICoach } from "../contexts/AICoachContext";
-import { employees } from "../data/sampleData";
+import { useEmployees } from "../hooks/useApiData";
+import type { Employee } from "@/lib/api";
 
 const DashboardIcon = bundleIcon(Board20Filled, Board20Regular);
 const WellbeingRisks = bundleIcon(HeartPulse20Filled, HeartPulse20Regular);
@@ -200,11 +201,11 @@ function resolveNav(pathname: string, items: NavItemConfig[]) {
   return items.find((i) => pathname.startsWith(i.path + "/"));
 }
 
-function resolveBreadcrumb(pathname: string, titles: Record<string, string>): { parent?: { label: string; path: string }; current: string } {
+function resolveBreadcrumb(pathname: string, titles: Record<string, string>, employees: Employee[]): { parent?: { label: string; path: string }; current: string } {
   if (pathname.startsWith("/teams/1/members/")) {
     const id = pathname.split("/teams/1/members/")[1]?.split("/")[0];
     const emp = employees.find((e) => e.id === id);
-    return { parent: { label: "My Team", path: "/team" }, current: emp?.name || "Team Member" };
+    return { parent: { label: "My Team", path: "/team" }, current: emp?.name ?? "Team Member" };
   }
   const title = titles[pathname] || "Dashboard";
   return { current: title };
@@ -223,6 +224,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { role, userName, userTitle } = useRole();
+  const { data: employees = [] } = useEmployees("team1");
 
   const isEmbedded = searchParams.get("embed") === "true" || searchParams.get("chromeless") === "true";
 
@@ -233,7 +235,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   const matchedNav = resolveNav(location.pathname, navItems);
   const activeValue = matchedNav?.value || "dashboard";
-  const breadcrumb = resolveBreadcrumb(location.pathname, pageTitles);
+  const breadcrumb = resolveBreadcrumb(location.pathname, pageTitles, employees);
 
   const handleNavSelect = useCallback((_: unknown, data: { value: string }) => {
     const items = role === "member" ? memberNavItems : leadNavItems;

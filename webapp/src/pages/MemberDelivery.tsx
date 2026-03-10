@@ -1,8 +1,8 @@
 import { PageHeader } from "../components/PageHeader";
-import { Text, Card, makeStyles, tokens } from "@fluentui/react-components";
+import { Text, Card, makeStyles, tokens, Spinner } from "@fluentui/react-components";
 import { Clock20Regular, BranchFork20Regular, TaskListSquareLtr20Regular, CalendarLtr20Regular } from "@fluentui/react-icons";
 import { AppShell } from "../components/AppShell";
-import { memberDeliveryStats, sprintContributions } from "../data/memberDashboardData";
+import { useMemberDashboard } from "../hooks/useApiData";
 
 const useStyles = makeStyles({
   statsRow: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", marginBottom: "24px", "@media (max-width: 800px)": { gridTemplateColumns: "repeat(2, 1fr)" } },
@@ -12,15 +12,30 @@ const useStyles = makeStyles({
   sprintRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${tokens.colorNeutralStroke2}` },
 });
 
-const stats = [
-  { icon: <Clock20Regular style={{ color: "#f7630c" }} />, value: `${memberDeliveryStats.hoursThisWeek}h`, label: "Hours This Week", color: "#f7630c" },
-  { icon: <BranchFork20Regular style={{ color: "#5b5fc7" }} />, value: `${memberDeliveryStats.prsMerged}`, label: "PRs Merged", color: "#5b5fc7" },
-  { icon: <TaskListSquareLtr20Regular style={{ color: "#107c41" }} />, value: `${memberDeliveryStats.tasksCompleted}`, label: "Tasks Completed", color: "#107c41" },
-  { icon: <CalendarLtr20Regular style={{ color: "#d13438" }} />, value: `${memberDeliveryStats.meetingHours}h`, label: "Meetings", color: "#d13438" },
-];
-
 const MemberDelivery: React.FC = () => {
   const styles = useStyles();
+  const { data: dashboard, isLoading } = useMemberDashboard("1");
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+          <Spinner size="large" label="Loading delivery stats..." />
+        </div>
+      </AppShell>
+    );
+  }
+
+  const deliveryStats = dashboard?.deliveryStats;
+  const sprintContributions = dashboard?.sprintContributions ?? [];
+
+  const stats = [
+    { icon: <Clock20Regular style={{ color: "#f7630c" }} />, value: `${deliveryStats?.hoursThisWeek ?? 0}h`, label: "Hours This Week", color: "#f7630c" },
+    { icon: <BranchFork20Regular style={{ color: "#5b5fc7" }} />, value: `${deliveryStats?.prsMerged ?? 0}`, label: "PRs Merged", color: "#5b5fc7" },
+    { icon: <TaskListSquareLtr20Regular style={{ color: "#107c41" }} />, value: `${deliveryStats?.tasksCompleted ?? 0}`, label: "Tasks Completed", color: "#107c41" },
+    { icon: <CalendarLtr20Regular style={{ color: "#d13438" }} />, value: `${deliveryStats?.meetingHours ?? 0}h`, label: "Meetings", color: "#d13438" },
+  ];
+
   return (
     <AppShell>
       <div style={{ maxWidth: "900px", margin: "0 auto", width: "100%" }}>

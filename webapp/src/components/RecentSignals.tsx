@@ -15,7 +15,7 @@ import {
   Circle12Filled,
 } from "@fluentui/react-icons";
 import { useNavigate } from "react-router-dom";
-import type { Signal } from "../data/sampleData";
+import type { Signal } from "@/types";
 
 const useStyles = makeStyles({
   header: {

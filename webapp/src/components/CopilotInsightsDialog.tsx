@@ -19,7 +19,7 @@ import {
   Sparkle20Filled,
 } from "@fluentui/react-icons";
 import { useEffect, useRef, useReducer } from "react";
-import type { Employee } from "../data/sampleData";
+import type { Employee } from "@/types";
 import { LogiqDialog } from "./LogiqDialog";
 
 const shimmerKeyframes = {

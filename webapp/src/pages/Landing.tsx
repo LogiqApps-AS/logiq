@@ -1,4 +1,4 @@
-import { Text, Button, makeStyles, tokens, Card, Badge } from "@fluentui/react-components";
+import { Text, Button, makeStyles, tokens, Badge } from "@fluentui/react-components";
 import {
   BrainCircuit24Regular,
   BrainCircuit20Regular,
@@ -20,7 +20,7 @@ import {
 } from "@fluentui/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { teamKPIs } from "../data/sampleData";
+import { useTeamKPIs } from "../hooks/useApiData";
 import { RevealSection, RevealItem } from "../components/RevealSection";
 
 const useStyles = makeStyles({
@@ -356,14 +356,6 @@ const agents = [
   },
 ];
 
-const kpis = [
-  { label: "Well-being Index", data: teamKPIs.wellbeing },
-  { label: "Skills & Development", data: teamKPIs.skills },
-  { label: "Motivation Index", data: teamKPIs.motivation },
-  { label: "Churn & Retention", data: teamKPIs.churn },
-  { label: "Delivery & Workload", data: teamKPIs.delivery },
-];
-
 const signalExamples = [
   { title: "Sick Leave Spike", who: "Alex Chen · 2h ago", color: "#d13438" },
   { title: "Workload Levels", who: "David Kim · 6h ago", color: "#f7630c" },
@@ -376,6 +368,15 @@ const Landing = () => {
   const styles = useStyles();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("");
+  const { data: kpiData } = useTeamKPIs();
+
+  const kpis = [
+    { label: "Well-being Index", data: kpiData?.wellbeing },
+    { label: "Skills & Development", data: kpiData?.skills },
+    { label: "Motivation Index", data: kpiData?.motivation },
+    { label: "Churn & Retention", data: kpiData?.churn },
+    { label: "Delivery & Workload", data: kpiData?.delivery },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -559,8 +560,8 @@ const Landing = () => {
         <div className={styles.kpiGrid}>
           {kpis.map((k, i) => (
             <RevealItem key={k.label} delay={i * 0.1} className={`${styles.kpiCard} hover-lift`}>
-              <div className={styles.kpiScore} style={{ color: statusColors[k.data.status] }}>
-                {k.data.score}
+              <div className={styles.kpiScore} style={{ color: k.data ? statusColors[k.data.status] : "#999" }}>
+                {k.data?.score ?? "—"}
               </div>
               <Text size={300} style={{ color: "#616161" }}>
                 {k.label}

@@ -29,7 +29,7 @@ import DeliveryTab from "../components/DeliveryTab";
 import { useEmployees } from "../hooks/useApiData";
 import { TeamGridSkeleton, ErrorState } from "../components/LoadingState";
 import { AIOverviewDialog } from "../components/AIOverviewDialog";
-import type { Employee } from "../data/sampleData";
+import type { Employee } from "@/lib/api";
 
 const useStyles = makeStyles({
   grid: {
@@ -57,7 +57,6 @@ const useStyles = makeStyles({
     color: "#5b5fc7",
     ":hover": { backgroundColor: "#d8dcf5" },
   },
-  // AI Summary card
   summaryCard: {
     ...shorthands.border("1px", "solid", "#d8dcf5"),
     borderRadius: "12px",
@@ -179,7 +178,6 @@ const MyTeam = () => {
           isLoading ? <TeamGridSkeleton /> :
           isError ? <ErrorState message="Failed to load team data." onRetry={() => refetch()} /> :
           <>
-            {/* AI Team Summary */}
             {summary && (
               <div className={styles.summaryCard}>
                 <div className={styles.summaryHeader}>
@@ -250,7 +248,6 @@ const MyTeam = () => {
               </div>
             )}
 
-            {/* Active filter badge */}
             {activeFilter && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", padding: "10px 16px", borderRadius: "8px", backgroundColor: "#e8ebf9" }}>
                 <Text size={300} weight="semibold" style={{ color: "#5b5fc7" }}>

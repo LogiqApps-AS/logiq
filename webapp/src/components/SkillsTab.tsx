@@ -16,9 +16,8 @@ import {
   Warning20Regular,
 } from "@fluentui/react-icons";
 import { useState, useMemo } from "react";
-import { employees } from "../data/sampleData";
-import type { Employee } from "../data/sampleData";
-import { allSkills, employeeSkills } from "../data/skillsData";
+import type { Employee } from "@/lib/api";
+import { useEmployees, useSkillsMatrix } from "../hooks/useApiData";
 import { AIOverviewDialog } from "./AIOverviewDialog";
 
 
@@ -201,6 +200,11 @@ const SkillsTab: React.FC = () => {
   const [page, setPage] = useState(1);
   const [aiEmployee, setAiEmployee] = useState<Employee | null>(null);
 
+  const { data: employees = [] } = useEmployees("team1");
+  const { data: skillsMatrix } = useSkillsMatrix("team1");
+  const allSkills = skillsMatrix?.allSkills ?? [];
+  const employeeSkills: Record<string, string[]> = skillsMatrix?.employeeSkills ?? {};
+
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) => {
       const next = new Set(prev);
@@ -226,12 +230,13 @@ const SkillsTab: React.FC = () => {
       });
     }
     return list;
-  }, [search, selectedSkills]);
+  }, [employees, search, selectedSkills, employeeSkills]);
 
   const totalSkillsTracked = allSkills.length;
   const avgSkillsPerPerson =
-    employees.reduce((sum, e) => sum + (employeeSkills[e.id]?.length || 0), 0) /
-    employees.length;
+    employees.length > 0
+      ? employees.reduce((sum, e) => sum + (employeeSkills[e.id]?.length || 0), 0) / employees.length
+      : 0;
   const totalGaps = employees.reduce(
     (sum, e) => sum + (allSkills.length - (employeeSkills[e.id]?.length || 0)),
     0

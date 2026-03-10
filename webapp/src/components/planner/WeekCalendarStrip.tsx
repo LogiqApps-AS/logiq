@@ -11,7 +11,7 @@ import {
 } from "@fluentui/react-icons";
 import { useState, useMemo } from "react";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
-import type { Meeting } from "../../data/meetingsData";
+import type { Meeting } from "@/types";
 
 const useStyles = makeStyles({
   container: {

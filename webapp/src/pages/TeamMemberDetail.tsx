@@ -8,6 +8,7 @@ import {
   Tab,
   TabList,
   ProgressBar,
+  Spinner,
 } from "@fluentui/react-components";
 import {
   ArrowLeft20Regular,
@@ -29,8 +30,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useTabParam } from "../hooks/useTabParam";
 import { AppShell } from "../components/AppShell";
-import { employees } from "../data/sampleData";
-import { getMemberDetail } from "../data/memberDetailData";
+import { useEmployee, useMemberDetail } from "../hooks/useApiData";
 import { EmptyState } from "../components/EmptyState";
 
 const useStyles = makeStyles({
@@ -48,131 +48,85 @@ const useStyles = makeStyles({
     ":hover": { color: tokens.colorNeutralForeground1 },
   },
   profileCard: {
-    ...shorthands.border("1px", "solid", tokens.colorNeutralStroke2),
-    borderRadius: "12px",
-    backgroundColor: tokens.colorNeutralBackground1,
-    padding: "24px",
     display: "flex",
     alignItems: "center",
-    gap: "20px",
-    marginBottom: "20px",
+    gap: "16px",
+    padding: "20px 24px",
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderRadius: "12px",
+    marginBottom: "16px",
     flexWrap: "wrap",
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
   },
   profileInfo: {
-    flexGrow: 1,
+    flex: 1,
+    minWidth: "200px",
   },
   skillBadge: {
-    display: "inline-block",
-    padding: "3px 12px",
-    borderRadius: "14px",
-    fontSize: "12px",
-    fontWeight: 500,
-    backgroundColor: "#e8ebf9",
-    color: "#5b5fc7",
-    marginRight: "6px",
-    marginTop: "6px",
+    display: "inline-flex",
+    fontSize: "11px",
+    fontWeight: "600",
+    padding: "2px 8px",
+    borderRadius: "4px",
+    marginRight: "4px",
+    marginTop: "4px",
+    backgroundColor: tokens.colorBrandBackground2,
+    color: tokens.colorBrandForeground2,
   },
   kpiGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
     gap: "12px",
-    marginBottom: "20px",
-    "@media (max-width: 900px)": {
+    marginBottom: "16px",
+    "@media (max-width: 768px)": {
       gridTemplateColumns: "repeat(3, 1fr)",
-    },
-    "@media (max-width: 480px)": {
-      gridTemplateColumns: "repeat(2, 1fr)",
     },
   },
   kpiCard: {
-    ...shorthands.border("1px", "solid", tokens.colorNeutralStroke2),
-    borderRadius: "10px",
-    backgroundColor: tokens.colorNeutralBackground1,
-    padding: "16px",
-    textAlign: "center",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    padding: "16px 12px",
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderRadius: "10px",
     gap: "4px",
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
   },
   statGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
     gap: "12px",
-    marginBottom: "24px",
+    marginBottom: "20px",
     "@media (max-width: 768px)": {
       gridTemplateColumns: "repeat(2, 1fr)",
     },
-    "@media (max-width: 480px)": {
-      gridTemplateColumns: "1fr",
-    },
   },
   statCard: {
-    ...shorthands.border("1px", "solid", tokens.colorNeutralStroke2),
-    borderRadius: "10px",
-    backgroundColor: tokens.colorNeutralBackground1,
-    padding: "14px 18px",
     display: "flex",
     alignItems: "center",
-    gap: "12px",
+    gap: "10px",
+    padding: "14px 16px",
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderRadius: "10px",
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
   },
   tabContent: {
     marginTop: "16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
   },
   sectionCard: {
-    ...shorthands.border("1px", "solid", tokens.colorNeutralStroke2),
-    borderRadius: "10px",
-    backgroundColor: tokens.colorNeutralBackground1,
-    padding: "20px",
-    marginBottom: "12px",
-  },
-  signalCard: {
-    borderRadius: "10px",
     padding: "16px 20px",
-    marginBottom: "10px",
-  },
-  signalCritical: {
-    backgroundColor: "#fff5f5",
-    ...shorthands.borderLeft("4px", "solid", "#d13438"),
-  },
-  signalWarning: {
-    backgroundColor: "#fffdf5",
-    ...shorthands.borderLeft("4px", "solid", "#f7630c"),
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderRadius: "10px",
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
   },
   feedbackCard: {
-    ...shorthands.border("1px", "solid", tokens.colorNeutralStroke2),
-    borderRadius: "10px",
+    padding: "16px 20px",
     backgroundColor: tokens.colorNeutralBackground1,
-    padding: "20px",
-    marginBottom: "12px",
-  },
-  strengthItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    marginTop: "4px",
-    fontSize: "13px",
-  },
-  growthItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    marginTop: "4px",
-    fontSize: "13px",
-    color: tokens.colorNeutralForeground2,
-  },
-  roleTimeline: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "12px",
-    marginBottom: "16px",
-  },
-  roleDot: {
-    width: "10px",
-    height: "10px",
-    borderRadius: "50%",
-    marginTop: "6px",
-    flexShrink: 0,
+    borderRadius: "10px",
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
   },
   twoColGrid: {
     display: "grid",
@@ -182,20 +136,59 @@ const useStyles = makeStyles({
       gridTemplateColumns: "1fr",
     },
   },
+  strengthItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    fontSize: "13px",
+    color: tokens.colorNeutralForeground2,
+    marginTop: "4px",
+  },
+  growthItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    fontSize: "13px",
+    color: tokens.colorNeutralForeground2,
+    marginTop: "4px",
+  },
   threeColGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
     gap: "12px",
-    marginBottom: "16px",
-    "@media (max-width: 600px)": {
-      gridTemplateColumns: "1fr",
-    },
+    marginBottom: "12px",
+  },
+  signalCard: {
+    padding: "14px 16px",
+    borderRadius: "10px",
+    border: "1px solid",
+  },
+  signalCritical: {
+    backgroundColor: "#fff0f0",
+    borderColor: "#ffd7d7",
+  },
+  signalWarning: {
+    backgroundColor: "#fff9f0",
+    borderColor: "#ffe0b2",
+  },
+  roleTimeline: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-start",
+    marginBottom: "12px",
+  },
+  roleDot: {
+    width: "12px",
+    height: "12px",
+    borderRadius: "50%",
+    marginTop: "4px",
+    flexShrink: 0,
   },
 });
 
 const getScoreColor = (score: number) => {
-  if (score >= 70) return "#107c41";
-  if (score >= 50) return "#f7630c";
+  if (score >= 80) return "#107c41";
+  if (score >= 60) return "#f7630c";
   return "#d13438";
 };
 
@@ -224,8 +217,20 @@ const TeamMemberDetail = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useTabParam("projects");
 
-  const emp = employees.find((e) => e.id === id);
-  if (!emp) {
+  const { data: emp, isLoading: empLoading } = useEmployee(id ?? "");
+  const { data: detail, isLoading: detailLoading } = useMemberDetail(id ?? "");
+
+  if (empLoading || detailLoading) {
+    return (
+      <AppShell>
+        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+          <Spinner size="large" label="Loading member profile..." />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!emp || !detail) {
     return (
       <AppShell>
         <Text size={500}>Employee not found</Text>
@@ -233,7 +238,6 @@ const TeamMemberDetail = () => {
     );
   }
 
-  const detail = getMemberDetail(emp.id);
   const scores = [emp.wellbeing.score, emp.skills.score, emp.motivation.score, emp.delivery.score, emp.churnPercent + "%"];
 
   return (
@@ -499,7 +503,7 @@ const TeamMemberDetail = () => {
                 <Text weight="bold" size={400} style={{ display: "block", marginBottom: "16px" }}>
                   📈 Role History
                 </Text>
-                {detail.roleHistory.map((r, i) => (
+                {detail.roleHistory.map((r) => (
                   <div key={`${r.title}-${r.period}`} className={styles.roleTimeline}>
                     <div
                       className={styles.roleDot}
@@ -519,7 +523,7 @@ const TeamMemberDetail = () => {
                   <Text weight="bold" size={400} style={{ display: "block", marginBottom: "12px" }}>
                     🏅 Certifications & Achievements
                   </Text>
-                  {detail.certifications.map((c, i) => (
+                  {detail.certifications.map((c) => (
                     <div key={c.title} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                       <Certificate16Regular style={{ color: "#f7b731" }} />
                       <div>

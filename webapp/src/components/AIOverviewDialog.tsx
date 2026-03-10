@@ -18,8 +18,9 @@ import {
   Sparkle20Filled,
 } from "@fluentui/react-icons";
 import { useEffect, useRef, useReducer } from "react";
-import type { Employee } from "../data/sampleData";
-import { getMemberDetail } from "../data/memberDetailData";
+import type { Employee } from "@/lib/api";
+import type { MemberDetail } from "@/lib/api";
+import { useMemberDetail } from "../hooks/useApiData";
 import { LogiqDialog } from "./LogiqDialog";
 
 const useStyles = makeStyles({
@@ -206,9 +207,24 @@ const useStyles = makeStyles({
   },
 });
 
-function generateOverview(emp: Employee) {
-  const detail = getMemberDetail(emp.id);
-  const scores = { wellbeing: emp.wellbeing.score, skills: emp.skills.score, motivation: emp.motivation.score, delivery: emp.delivery.score };
+const emptyDetail: MemberDetail = {
+  department: "",
+  skills: [],
+  roleHistory: [],
+  projects: [],
+  feedback: [],
+  training: [],
+  signals: [],
+  certifications: [],
+  feedbackScoreAvg: 0,
+  trainingHoursTotal: 0,
+  activeSignalsCount: 0,
+  projectCount: 0,
+};
+
+function generateOverview(emp: Employee, detail: MemberDetail | null) {
+  const d = detail ?? emptyDetail;
+  const scores = { wellbeing: emp.wellbeing?.score ?? 0, skills: emp.skills?.score ?? 0, motivation: emp.motivation?.score ?? 0, delivery: emp.delivery?.score ?? 0 };
   const avg = Math.round((scores.wellbeing + scores.skills + scores.motivation + scores.delivery) / 4);
 
   const strengths: string[] = [];
@@ -261,7 +277,7 @@ function generateOverview(emp: Employee) {
     summary = `${emp.name} is showing concerning patterns with an average score of ${avg}. Multiple dimensions are below target, and proactive intervention is recommended to prevent further decline.`;
   }
 
-  return { strengths, weaknesses, recs, summary, detail, avg };
+  return { strengths, weaknesses, recs, summary, detail: d, avg };
 }
 
 interface AIOverviewDialogProps {
@@ -303,10 +319,11 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
   const [loadingState, dispatch] = useReducer(loadingReducer, { isLoading: true, step: 0 });
   const prevEmployeeId = useRef<string | null>(null);
 
+  const { data: apiDetail, isLoading: detailLoading } = useMemberDetail(employee?.id ?? "", "team1");
+
   useEffect(() => {
     if (!open || !employee) return;
-    // Re-trigger loading when dialog opens or employee changes
-    if (prevEmployeeId.current !== employee.id || !open) {
+    if (prevEmployeeId.current !== employee.id) {
       dispatch({ type: 'START' });
       prevEmployeeId.current = employee.id;
     }
@@ -327,7 +344,7 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
 
   if (!employee) return null;
 
-  const { strengths, weaknesses, recs, summary, detail } = generateOverview(employee);
+  const { strengths, weaknesses, recs, summary, detail: overviewDetail } = generateOverview(employee, apiDetail ?? null);
   const scores = [
     { label: "Well-being", value: employee.wellbeing.score },
     { label: "Skills", value: employee.skills.score },
@@ -397,13 +414,13 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
       badge="Generated Analysis"
       maxWidth="560px"
     >
-      {loadingState.isLoading ? renderSkeleton() : (
+      {loadingState.isLoading || detailLoading ? renderSkeleton() : (
       <div className={styles.contentFadeIn}>
       {/* Employee info */}
       <div style={{ marginBottom: "16px" }}>
         <Persona
           name={employee.name}
-          secondaryText={`${employee.role} · ${detail.department} · ${employee.tenure}`}
+          secondaryText={`${employee.role} · ${overviewDetail.department} · ${employee.tenure}`}
           size="large"
           avatar={{ color: employee.churnRisk === "At risk" ? "cranberry" : "brand" }}
           presence={employee.churnRisk === "At risk" ? { status: "busy" } : { status: "available" }}
@@ -478,20 +495,20 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         </div>
         <div className={styles.expItem}>
           <Text size={200} style={{ color: tokens.colorNeutralForeground3, minWidth: "90px" }}>Projects</Text>
-          <Text size={200} weight="semibold">{detail.projectCount} ({detail.projects.filter(p => p.status === "Active").length} active)</Text>
+          <Text size={200} weight="semibold">{overviewDetail.projectCount} ({overviewDetail.projects.filter(p => p.status === "Active").length} active)</Text>
         </div>
         <div className={styles.expItem}>
           <Text size={200} style={{ color: tokens.colorNeutralForeground3, minWidth: "90px" }}>Training</Text>
-          <Text size={200} weight="semibold">{detail.trainingHoursTotal}h completed</Text>
+          <Text size={200} weight="semibold">{overviewDetail.trainingHoursTotal}h completed</Text>
         </div>
         <div className={styles.expItem}>
           <Text size={200} style={{ color: tokens.colorNeutralForeground3, minWidth: "90px" }}>Skills</Text>
           <div className={styles.pillList}>
-            {detail.skills.slice(0, 4).map((s) => (
+            {overviewDetail.skills.slice(0, 4).map((s) => (
               <span key={s} className={styles.pillBlue}>{s}</span>
             ))}
-            {detail.skills.length > 4 && (
-              <span className={styles.pillBlue}>+{detail.skills.length - 4}</span>
+            {overviewDetail.skills.length > 4 && (
+              <span className={styles.pillBlue}>+{overviewDetail.skills.length - 4}</span>
             )}
           </div>
         </div>

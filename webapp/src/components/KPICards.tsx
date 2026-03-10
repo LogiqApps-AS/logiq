@@ -9,7 +9,7 @@ import {
   ArrowTrending20Regular,
 } from "@fluentui/react-icons";
 import { useNavigate } from "react-router-dom";
-import { type KPIStatus } from "../data/sampleData";
+import type { KPIStatus } from "@/types";
 
 const useStyles = makeStyles({
   grid: {
@@ -80,7 +80,7 @@ interface KPICardData {
   score: number;
   status: KPIStatus;
   trend: number;
-  subMetrics: { label: string; value: string }[];
+  subMetrics?: { label: string; value: string }[];
 }
 
 const kpiRoutes: Record<string, { path: string; filter?: string }> = {
@@ -121,7 +121,7 @@ const KPICard: React.FC<{ data: KPICardData }> = ({ data }) => {
         </span>
       </div>
       <div className={styles.subMetrics}>
-        {data.subMetrics.map((m) => (
+        {(data.subMetrics ?? []).map((m) => (
           <div key={m.label} className={styles.subRow}>
             <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>{m.label}</Text>
             <Text size={200} weight="semibold">{m.value}</Text>
@@ -142,10 +142,29 @@ interface KPICardsProps {
   };
 }
 
+function toKPICardData(raw: { label?: string; score?: number; status?: string; trend?: number; description?: string; subMetrics?: { label: string; value: string }[] } | null | undefined): KPICardData | null {
+  if (!raw) return null;
+  const status = (raw.status === "green" || raw.status === "yellow" || raw.status === "red" ? raw.status : "yellow") as KPIStatus;
+  const subMetrics = Array.isArray(raw.subMetrics) ? raw.subMetrics : (raw.description ? [{ label: "Summary", value: raw.description }] : []);
+  return {
+    label: raw.label ?? "",
+    score: Number(raw.score) ?? 0,
+    status,
+    trend: Number(raw.trend) ?? 0,
+    subMetrics,
+  };
+}
+
 export const KPICards: React.FC<KPICardsProps> = ({ data }) => {
   const styles = useStyles();
   if (!data) return null;
-  const cards = [data.wellbeing, data.skills, data.motivation, data.churn, data.delivery];
+  const cards = [
+    toKPICardData(data.wellbeing),
+    toKPICardData(data.skills),
+    toKPICardData(data.motivation),
+    toKPICardData(data.churn),
+    toKPICardData(data.delivery),
+  ].filter((c): c is KPICardData => c !== null);
   return (
     <div className={styles.grid}>
       {cards.map((c) => <KPICard key={c.label} data={c} />)}

@@ -18,7 +18,7 @@ import {
 } from "@fluentui/react-icons";
 import { useState } from "react";
 import { format } from "date-fns";
-import type { Meeting } from "../../data/meetingsData";
+import type { Meeting } from "@/types";
 
 const useStyles = makeStyles({
   container: {

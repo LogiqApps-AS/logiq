@@ -25,8 +25,8 @@ import {
 import { format } from "date-fns";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { employees } from "../../data/sampleData";
-import type { Meeting } from "../../data/meetingsData";
+import { useEmployees } from "../../hooks/useApiData";
+import type { Meeting } from "@/types";
 
 const useStyles = makeStyles({
   container: {
@@ -154,6 +154,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
   const navigate = useNavigate();
   const [newTopic, setNewTopic] = useState("");
   const [newFollowUp, setNewFollowUp] = useState("");
+  const { data: employees = [] } = useEmployees("team1");
 
   if (!meeting) {
     return (
