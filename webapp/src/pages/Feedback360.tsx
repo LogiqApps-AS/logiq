@@ -19,8 +19,7 @@ import {
   ShieldLock20Regular,
   Checkmark20Regular,
 } from "@fluentui/react-icons";
-import { AppShell } from "../components/AppShell";
-import { PageHeader } from "../components/PageHeader";
+import { PageContainer } from "../components/PageContainer";
 
 const useStyles = makeStyles({
   container: { maxWidth: "900px", margin: "0 auto", width: "100%" },
@@ -151,9 +150,11 @@ const Feedback360: React.FC = () => {
   };
 
   return (
-    <AppShell>
-      <div className={styles.container}>
-        <PageHeader title="360 Feedback" subtitle="View feedback, request peer reviews, and track your growth areas" />
+    <PageContainer>
+      <Text size={600} weight="bold" style={{ marginBottom: "4px" }}>360 Feedback</Text>
+      <Text size={300} style={{ color: tokens.colorNeutralForeground3, marginBottom: "24px", display: "block" }}>
+        View feedback, request peer reviews, and track your growth areas
+      </Text>
 
         {/* Stats */}
         <div className={styles.statsGrid}>
@@ -286,8 +287,7 @@ const Feedback360: React.FC = () => {
             ))}
           </div>
         </div>
-      </div>
-    </AppShell>
+    </PageContainer>
   );
 };
 
