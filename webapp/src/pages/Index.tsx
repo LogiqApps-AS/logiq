@@ -1,7 +1,7 @@
 import {
 } from "@fluentui/react-components";
 import { PageHeader } from "../components/PageHeader";
-import { AppShell } from "../components/AppShell";
+import { PageContainer } from "../components/PageContainer";
 import { SignalBanner } from "../components/SignalBanner";
 import { KPICards } from "../components/KPICards";
 import { FinancialSummary } from "../components/FinancialSummary";
@@ -32,12 +32,11 @@ const Index = () => {
     : 0;
 
   return (
-    <AppShell>
-      <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto" }}>
-        {role === "member" ? (
-          <MemberDashboardWidgets />
-        ) : (
-          <>
+    <PageContainer>
+      {role === "member" ? (
+        <MemberDashboardWidgets />
+      ) : (
+        <>
             <PageHeader title="Team Dashboard" subtitle="Intelligence overview for your team of 10" />
 
             {signalsQuery.isLoading ? (
@@ -81,10 +80,9 @@ const Index = () => {
                 <AtRiskEmployees employees={employeesQuery.data!} />
               )}
             </div>
-          </>
-        )}
-      </div>
-    </AppShell>
+        </>
+      )}
+    </PageContainer>
   );
 };
 

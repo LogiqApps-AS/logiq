@@ -17,7 +17,9 @@ import {
   Circle12Filled,
   CheckmarkCircle20Regular,
   Warning20Filled,
+  Checkmark20Regular,
 } from "@fluentui/react-icons";
+import { Logo } from "../components/Logo";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTeamKPIs } from "../hooks/useApiData";
@@ -45,16 +47,6 @@ const useStyles = makeStyles({
     display: "flex",
     alignItems: "center",
     gap: "10px",
-  },
-  navBrandIcon: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "8px",
-    backgroundColor: "#0f6cbd",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#fff",
   },
   navLinks: {
     display: "flex",
@@ -400,9 +392,7 @@ const Landing = () => {
       {/* NAV */}
       <div className={styles.nav}>
         <div className={styles.navBrand}>
-          <div className={styles.navBrandIcon}>
-            <BrainCircuit24Regular />
-          </div>
+          <Logo size={36} iconSize={20} />
           <Text weight="bold" size={500}>
             LogIQ
           </Text>
@@ -438,7 +428,7 @@ const Landing = () => {
             appearance="primary"
             icon={<ArrowRight20Regular />}
             iconPosition="after"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/demo")}
           >
             Get Started
           </Button>
@@ -464,7 +454,7 @@ const Landing = () => {
             size="large"
             icon={<ArrowRight20Regular />}
             iconPosition="after"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/demo")}
           >
             Get Started
           </Button>
