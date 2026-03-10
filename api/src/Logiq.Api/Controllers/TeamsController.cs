@@ -16,7 +16,7 @@ public sealed class TeamsController(
     [ProducesResponseType<IReadOnlyList<Employee>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmployees(string teamId, CancellationToken cancellationToken)
     {
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
         return Ok(employees);
     }
 
@@ -25,7 +25,7 @@ public sealed class TeamsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmployee(string teamId, string employeeId, CancellationToken cancellationToken)
     {
-        var employee = await employeeRepository.GetByIdAsync(teamId, employeeId, cancellationToken);
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, employeeId, cancellationToken);
         return employee is not null ? Ok(employee) : NotFound();
     }
 
@@ -33,7 +33,7 @@ public sealed class TeamsController(
     [ProducesResponseType<IReadOnlyList<Signal>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSignals(string teamId, CancellationToken cancellationToken)
     {
-        var signals = await signalRepository.ListTeamSignalsAsync(teamId, cancellationToken);
+        IReadOnlyList<Signal> signals = await signalRepository.ListTeamSignalsAsync(teamId, cancellationToken);
         return Ok(signals);
     }
 
@@ -41,7 +41,7 @@ public sealed class TeamsController(
     [ProducesResponseType<TeamKpis>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetKpis(string teamId, CancellationToken cancellationToken)
     {
-        var kpis = await kpiRepository.GetCurrentAsync(teamId, cancellationToken);
+        TeamKpis? kpis = await kpiRepository.GetCurrentAsync(teamId, cancellationToken);
         return kpis is not null ? Ok(kpis) : Ok(new TeamKpis());
     }
 
@@ -49,7 +49,7 @@ public sealed class TeamsController(
     [ProducesResponseType<TeamFinancials>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFinancials(string teamId, CancellationToken cancellationToken)
     {
-        var financials = await kpiRepository.GetFinancialsAsync(teamId, cancellationToken);
+        TeamFinancials? financials = await kpiRepository.GetFinancialsAsync(teamId, cancellationToken);
         return financials is not null ? Ok(financials) : Ok(new TeamFinancials());
     }
 
@@ -57,7 +57,7 @@ public sealed class TeamsController(
     [ProducesResponseType<SkillsMatrix>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSkills(string teamId, CancellationToken cancellationToken)
     {
-        var matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
+        SkillsMatrix matrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
         return Ok(matrix);
     }
 
@@ -66,21 +66,21 @@ public sealed class TeamsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMemberDetail(string teamId, string memberId, CancellationToken cancellationToken)
     {
-        var detail = await memberRepository.GetDetailAsync(teamId, memberId, cancellationToken);
+        MemberDetail? detail = await memberRepository.GetDetailAsync(teamId, memberId, cancellationToken);
         if (detail is not null)
             return Ok(detail);
 
-        var employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
+        Employee? employee = await employeeRepository.GetByIdAsync(teamId, memberId, cancellationToken);
         if (employee is null)
             return NotFound();
 
-        var skillsMatrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
-        var skills = (skillsMatrix.EmployeeSkills ?? new Dictionary<string, List<string>>()).TryGetValue(memberId, out var list) ? list : new List<string>();
-        var synthesized = new MemberDetail
+        SkillsMatrix skillsMatrix = await memberRepository.GetSkillsMatrixAsync(teamId, cancellationToken);
+        List<string> skills = (skillsMatrix.EmployeeSkills).TryGetValue(memberId, out List<string>? list) ? list : [];
+        MemberDetail synthesized = new MemberDetail
         {
             Department = "Engineering",
             Skills = skills,
-            RoleHistory = [new RoleHistory { Title = employee.Role, Department = "Engineering", Period = "Present", Duration = employee.Tenure ?? "", Current = true }],
+            RoleHistory = [new RoleHistory { Title = employee.Role, Department = "Engineering", Period = "Present", Duration = employee.Tenure, Current = true }],
             Projects = [],
             Feedback = [],
             Training = [],

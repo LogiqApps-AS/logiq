@@ -1,7 +1,6 @@
 using Logiq.Api.Agents;
 using Logiq.Api.Models;
 using Logiq.Api.Storage;
-using Microsoft.Extensions.Logging;
 
 namespace Logiq.Api.Services;
 
@@ -25,23 +24,23 @@ public sealed class AnalyzerOrchestrator(
     {
         logger.LogInformation("Starting full analysis pipeline for team {TeamId}", teamId);
 
-        var wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
-        var skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
-        var deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<WellbeingAnalysis> wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<SkillsAnalysis> skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<DeliveryAnalysis> deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
 
         await Task.WhenAll(wellbeingTask, skillsTask, deliveryTask);
 
-        var wellbeing = await wellbeingTask;
-        var skills = await skillsTask;
-        var delivery = await deliveryTask;
+        WellbeingAnalysis wellbeing = await wellbeingTask;
+        SkillsAnalysis skills = await skillsTask;
+        DeliveryAnalysis delivery = await deliveryTask;
 
         logger.LogInformation(
             "Analysis complete for team {TeamId}: Wellbeing={Wellbeing:F0}, Skills={Skills:F0}, Delivery={Delivery:F0}",
             teamId, wellbeing.TeamWellbeingIndex, skills.TeamSkillsCoverageAvg, delivery.TeamVelocityAvg);
 
-        var kpis = BuildTeamKpisFromAnalysis(wellbeing, skills, delivery);
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
-        var financials = ComputeFinancials(employees);
+        TeamKpis kpis = BuildTeamKpisFromAnalysis(wellbeing, skills, delivery);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        TeamFinancials financials = ComputeFinancials(employees);
 
         await kpiRepository.UpsertAsync(teamId, kpis, financials, cancellationToken);
     }
@@ -49,11 +48,10 @@ public sealed class AnalyzerOrchestrator(
     public async Task<ConversationPrep> PrepareConversationAsync(string teamId, string memberId, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Preparing 1:1 brief via A2A pipeline for {MemberId} in team {TeamId}", memberId, teamId);
-        Console.WriteLine("Preparing 1:1 brief via A2A pipeline for {MemberId} in team {TeamId}", memberId, teamId);
 
-        var wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
-        var skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
-        var deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<WellbeingAnalysis> wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<SkillsAnalysis> skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<DeliveryAnalysis> deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
 
         await Task.WhenAll(wellbeingTask, skillsTask, deliveryTask);
 
@@ -68,9 +66,9 @@ public sealed class AnalyzerOrchestrator(
 
     public async Task<TeamKpis> ComputeTeamKpisAsync(string teamId, CancellationToken cancellationToken = default)
     {
-        var wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
-        var skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
-        var deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<WellbeingAnalysis> wellbeingTask = wellbeingAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<SkillsAnalysis> skillsTask = skillsAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
+        Task<DeliveryAnalysis> deliveryTask = deliveryAnalyzer.AnalyzeTeamAsync(teamId, cancellationToken);
 
         await Task.WhenAll(wellbeingTask, skillsTask, deliveryTask);
 
@@ -82,9 +80,9 @@ public sealed class AnalyzerOrchestrator(
         SkillsAnalysis skills,
         DeliveryAnalysis delivery)
     {
-        var wellbeingScore = (int)wellbeing.TeamWellbeingIndex;
-        var skillsScore = (int)skills.TeamSkillsCoverageAvg;
-        var deliveryScore = (int)delivery.TeamVelocityAvg;
+        int wellbeingScore = (int)wellbeing.TeamWellbeingIndex;
+        int skillsScore = (int)skills.TeamSkillsCoverageAvg;
+        int deliveryScore = (int)delivery.TeamVelocityAvg;
 
         return new TeamKpis
         {
@@ -133,7 +131,7 @@ public sealed class AnalyzerOrchestrator(
 
     private static TeamFinancials ComputeFinancials(IReadOnlyList<Employee> employees)
     {
-        var atRisk = employees.Where(e => e.ChurnRisk is "At risk" or "Medium").ToList();
+        List<Employee> atRisk = employees.Where(e => e.ChurnRisk is "At risk" or "Medium").ToList();
         return new TeamFinancials
         {
             AtRiskCount = atRisk.Count,

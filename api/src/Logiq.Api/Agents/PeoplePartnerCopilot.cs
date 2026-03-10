@@ -1,7 +1,6 @@
 using Logiq.Api.Models;
 using Logiq.Api.Services;
 using Logiq.Api.Storage;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -48,33 +47,33 @@ public sealed class PeoplePartnerCopilot(
     {
         logger.LogInformation("People Partner Copilot processing message for team {TeamId}", teamId);
 
-        var employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
-        var kpis = await kpiRepository.GetCurrentAsync(teamId, cancellationToken);
-        var signals = await signalRepository.ListTeamSignalsAsync(teamId, cancellationToken);
+        IReadOnlyList<Employee> employees = await employeeRepository.ListByTeamAsync(teamId, cancellationToken);
+        TeamKpis? kpis = await kpiRepository.GetCurrentAsync(teamId, cancellationToken);
+        IReadOnlyList<Signal> signals = await signalRepository.ListTeamSignalsAsync(teamId, cancellationToken);
 
-        var ragContext = await ragService.RetrieveContextAsync(request.Message, 5, cancellationToken);
+        string ragContext = await ragService.RetrieveContextAsync(request.Message, 5, cancellationToken);
 
-        var kernel = kernelFactory.CreateKernel();
-        var agent = new ChatCompletionAgent
+        Kernel kernel = kernelFactory.CreateKernel();
+        ChatCompletionAgent agent = new ChatCompletionAgent
         {
             Name = "PeoplePartnerCopilot",
             Instructions = BuildSystemContext(employees, kpis, signals, ragContext),
             Kernel = kernel
         };
 
-        var conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
-        var chat = new AgentGroupChat(agent);
+        string conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
+        AgentGroupChat chat = new AgentGroupChat(agent);
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, request.Message));
 
-        var reply = string.Empty;
-        await foreach (var message in chat.InvokeAsync(cancellationToken))
+        string reply = string.Empty;
+        await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
             reply += message.Content;
 
         return new ChatResponse
         {
             ConversationId = conversationId,
             Reply = reply,
-            Suggestions = ExtractSuggestions(reply)
+            Suggestions = ExtractSuggestions()
         };
     }
 
@@ -84,8 +83,8 @@ public sealed class PeoplePartnerCopilot(
         IReadOnlyList<Signal> signals,
         string ragContext)
     {
-        var atRisk = employees.Where(e => e.ChurnRisk is "At risk" or "Medium").ToList();
-        var signalSummary = signals.Count > 0
+        List<Employee> atRisk = employees.Where(e => e.ChurnRisk is "At risk" or "Medium").ToList();
+        string signalSummary = signals.Count > 0
             ? $"{signals.Count} active signals ({signals.Count(s => s.Type == "critical")} critical)"
             : "No active signals";
 
@@ -103,13 +102,10 @@ public sealed class PeoplePartnerCopilot(
             """;
     }
 
-    private static List<ChatSuggestion> ExtractSuggestions(string reply)
-    {
-        return
-        [
-            new ChatSuggestion { Text = "Show me the full team wellbeing breakdown" },
-            new ChatSuggestion { Text = "Which employees are at highest churn risk?" },
-            new ChatSuggestion { Text = "Generate 1:1 prep for the next meeting" }
-        ];
-    }
+    private static List<ChatSuggestion> ExtractSuggestions() =>
+    [
+        new() { Text = "Show me the full team wellbeing breakdown" },
+        new() { Text = "Which employees are at highest churn risk?" },
+        new() { Text = "Generate 1:1 prep for the next meeting" }
+    ];
 }

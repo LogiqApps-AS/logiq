@@ -10,20 +10,17 @@ namespace Logiq.Api.Controllers;
 [ApiController]
 public sealed class SearchController(IOptions<AzureSearchOptions> options) : ControllerBase
 {
-    /// <summary>
-    /// Returns Azure AI Search index status and document count so you can verify RAG ingestion.
-    /// </summary>
     [HttpGet("api/search/status")]
     [ProducesResponseType(typeof(SearchStatusResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStatus(CancellationToken cancellationToken = default)
     {
-        var opts = options.Value;
+        AzureSearchOptions opts = options.Value;
         if (string.IsNullOrEmpty(opts.Endpoint) || string.IsNullOrEmpty(opts.ApiKey) || string.IsNullOrEmpty(opts.IndexName))
         {
             return Ok(new SearchStatusResponse
             {
                 Configured = false,
-                IndexName = opts.IndexName ?? "",
+                IndexName = opts.IndexName,
                 DocumentCount = 0,
                 Message = "Azure AI Search is not configured (missing Endpoint, ApiKey, or IndexName)."
             });
@@ -31,10 +28,10 @@ public sealed class SearchController(IOptions<AzureSearchOptions> options) : Con
 
         try
         {
-            var searchClient = new SearchClient(new Uri(opts.Endpoint), opts.IndexName, new Azure.AzureKeyCredential(opts.ApiKey));
-            var searchOptions = new SearchOptions { Size = 0, IncludeTotalCount = true };
-            var result = await searchClient.SearchAsync<SearchDocument>("*", searchOptions, cancellationToken).ConfigureAwait(false);
-            var count = result.Value.TotalCount ?? 0;
+            SearchClient searchClient = new(new Uri(opts.Endpoint), opts.IndexName, new AzureKeyCredential(opts.ApiKey));
+            SearchOptions searchOptions = new() { Size = 0, IncludeTotalCount = true };
+            Response<SearchResults<SearchDocument>>? result = await searchClient.SearchAsync<SearchDocument>("*", searchOptions, cancellationToken).ConfigureAwait(false);
+            long count = result.Value.TotalCount ?? 0;
             return Ok(new SearchStatusResponse
             {
                 Configured = true,

@@ -6,4 +6,5 @@ public sealed class AzureSearchOptions
     public string ApiKey { get; set; } = string.Empty;
     public string IndexName { get; set; } = string.Empty;
     public string VectorFieldName { get; set; } = "contentVector";
+    public int VectorSearchDimensions { get; set; } = 1536;
 }

@@ -1,7 +1,5 @@
 using System.Text.Json;
 using Logiq.Api.Mcp;
-using Logiq.Api.Storage;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -43,39 +41,39 @@ public sealed class SkillsGrowthAnalyzer(
     {
         logger.LogInformation("Running Skills & Growth analysis for team {TeamId}", teamId);
 
-        var trainingJson = await learningTools.GetTrainingRecords(teamId, cancellationToken);
-        var idpJson = await learningTools.GetIdpGoals(teamId, cancellationToken);
-        var skillsJson = await learningTools.GetSkillAssessments(teamId, cancellationToken);
+        string trainingJson = await learningTools.GetTrainingRecords(teamId, cancellationToken);
+        string idpJson = await learningTools.GetIdpGoals(teamId, cancellationToken);
+        string skillsJson = await learningTools.GetSkillAssessments(teamId, cancellationToken);
 
-        var kernel = kernelFactory.CreateKernel();
-        var agent = new ChatCompletionAgent
+        Kernel kernel = kernelFactory.CreateKernel();
+        ChatCompletionAgent agent = new()
         {
             Name = "SkillsGrowthAnalyzer",
             Instructions = AgentInstructions,
             Kernel = kernel
         };
 
-        var prompt = $"""
-            Analyze this team's skills and growth data. Return a JSON SkillsAnalysis object.
-            Team ID: {teamId}
+        string prompt = $"""
+                         Analyze this team's skills and growth data. Return a JSON SkillsAnalysis object.
+                         Team ID: {teamId}
 
-            Training records:
-            {trainingJson}
+                         Training records:
+                         {trainingJson}
 
-            IDP goals:
-            {idpJson}
+                         IDP goals:
+                         {idpJson}
 
-            Skills matrix:
-            {skillsJson}
+                         Skills matrix:
+                         {skillsJson}
 
-            Return ONLY valid JSON matching the SkillsAnalysis schema. No markdown, no explanation.
-            """;
+                         Return ONLY valid JSON matching the SkillsAnalysis schema. No markdown, no explanation.
+                         """;
 
-        var chat = new AgentGroupChat(agent);
+        AgentGroupChat chat = new AgentGroupChat(agent);
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, prompt));
 
-        var responseText = string.Empty;
-        await foreach (var message in chat.InvokeAsync(cancellationToken))
+        string responseText = string.Empty;
+        await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
             responseText += message.Content;
 
         return TryParseAnalysis(responseText, teamId);
@@ -85,8 +83,10 @@ public sealed class SkillsGrowthAnalyzer(
     {
         try
         {
-            var result = JsonSerializer.Deserialize<SkillsAnalysis>(json,
+            SkillsAnalysis? result = JsonSerializer.Deserialize<SkillsAnalysis>(json,
+#pragma warning disable CA1869
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+#pragma warning restore CA1869
             return result ?? FallbackAnalysis(teamId);
         }
         catch

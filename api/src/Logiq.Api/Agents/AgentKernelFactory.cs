@@ -15,12 +15,12 @@ public sealed class AgentKernelFactory(IOptions<AzureOpenAiOptions> openAiOption
 
     public Kernel CreateKernel()
     {
-        var endpoint = _opts.Endpoint?.TrimEnd('/');
-        if (endpoint?.EndsWith("/openai/v1", StringComparison.OrdinalIgnoreCase) == true)
+        string endpoint = _opts.Endpoint.TrimEnd('/');
+        if (endpoint.EndsWith("/openai/v1", StringComparison.OrdinalIgnoreCase))
             endpoint = endpoint[..^"/openai/v1".Length].TrimEnd('/');
 
-        var builder = Kernel.CreateBuilder();
-        var baseUrl = endpoint ?? _opts.Endpoint ?? string.Empty;
+        IKernelBuilder builder = Kernel.CreateBuilder();
+        string baseUrl = endpoint;
         builder.AddAzureOpenAIChatCompletion(
             _opts.ChatDeploymentName,
             baseUrl,
