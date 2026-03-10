@@ -55,7 +55,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data }) => {
 
   return (
     <div className={styles.grid}>
-      <Card className={styles.card} onClick={() => navigate("/team?filter=at-risk")}>
+      <Card className={styles.card} onClick={() => navigate("/dashboard/team?filter=at-risk")}>
         <div className={styles.label}>
           <PeopleTeam20Regular style={{ color: tokens.colorNeutralForeground3 }} />
           <Text size={300} style={{ color: tokens.colorNeutralForeground3 }}>
@@ -70,7 +70,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data }) => {
           of {data.totalEmployees}
         </Text>
       </Card>
-      <Card className={styles.card} onClick={() => navigate("/team?filter=at-risk")}>
+      <Card className={styles.card} onClick={() => navigate("/dashboard/team?filter=at-risk")}>
         <div className={styles.label}>
           <Money20Regular style={{ color: tokens.colorNeutralForeground3 }} />
           <Text size={300} style={{ color: tokens.colorNeutralForeground3 }}>

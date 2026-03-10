@@ -84,11 +84,11 @@ interface KPICardData {
 }
 
 const kpiRoutes: Record<string, { path: string; filter?: string }> = {
-  "Well-being Index": { path: "/wellbeing" },
-  "Skills & Development": { path: "/team", filter: "low-skills" },
-  "Motivation Index": { path: "/team", filter: "low-wellbeing" },
-  "Churn & Retention": { path: "/team", filter: "at-risk" },
-  "Delivery & Workload": { path: "/team", filter: "low-performers" },
+  "Well-being Index": { path: "/dashboard/wellbeing" },
+  "Skills & Development": { path: "/dashboard/team", filter: "low-skills" },
+  "Motivation Index": { path: "/dashboard/team", filter: "low-wellbeing" },
+  "Churn & Retention": { path: "/dashboard/team", filter: "at-risk" },
+  "Delivery & Workload": { path: "/dashboard/team", filter: "low-performers" },
 };
 
 const KPICard: React.FC<{ data: KPICardData }> = ({ data }) => {
