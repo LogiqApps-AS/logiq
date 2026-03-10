@@ -133,27 +133,27 @@ const Navigation: React.FC<NavigationProps> = ({ isCollapsed }) => {
   };
 
   const overviewItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: <Home24Regular />, iconFilled: <Home24Filled /> },
-    { path: '/wellbeing', label: 'Wellbeing & Risks', icon: <HeartPulse24Regular />, iconFilled: <HeartPulse24Filled />, roles: ['lead'] },
-    { path: '/team', label: 'My Team', icon: <People24Regular />, iconFilled: <People24Filled />, roles: ['lead'] },
-    { path: '/member-wellbeing', label: 'Well-Being', icon: <HeartPulse24Regular />, iconFilled: <HeartPulse24Filled />, roles: ['member'] },
-    { path: '/signals', label: 'Signals', icon: <Alert24Regular />, iconFilled: <Alert24Filled />, roles: ['member'] },
+    { path: '/dashboard/', label: 'Dashboard', icon: <Home24Regular />, iconFilled: <Home24Filled /> },
+    { path: '/dashboard/wellbeing', label: 'Wellbeing & Risks', icon: <HeartPulse24Regular />, iconFilled: <HeartPulse24Filled />, roles: ['lead'] },
+    { path: '/dashboard/team', label: 'My Team', icon: <People24Regular />, iconFilled: <People24Filled />, roles: ['lead'] },
+    { path: '/dashboard/member-wellbeing', label: 'Well-Being', icon: <HeartPulse24Regular />, iconFilled: <HeartPulse24Filled />, roles: ['member'] },
+    { path: '/dashboard/signals', label: 'Signals', icon: <Alert24Regular />, iconFilled: <Alert24Filled />, roles: ['member'] },
   ];
 
   const developmentItems = [
-    { path: '/devplan', label: 'Dev Plan', icon: <TargetArrow24Regular />, iconFilled: <TargetArrow24Filled />, roles: ['member'] },
+    { path: '/dashboard/devplan', label: 'Dev Plan', icon: <TargetArrow24Regular />, iconFilled: <TargetArrow24Filled />, roles: ['member'] },
   ];
 
   const collaborationItems = [
-    { path: '/prep', label: '1:1 Planner', icon: <PersonSearch24Regular />, iconFilled: <PersonSearch24Filled /> },
-    { path: '/feedback360', label: '360 Feedback', icon: <Chat24Regular />, iconFilled: <Chat24Filled />, roles: ['member'] },
+    { path: '/dashboard/prep', label: '1:1 Planner', icon: <PersonSearch24Regular />, iconFilled: <PersonSearch24Filled /> },
+    { path: '/dashboard/feedback360', label: '360 Feedback', icon: <Chat24Regular />, iconFilled: <Chat24Filled />, roles: ['member'] },
   ];
 
   const filteredOverviewItems = overviewItems.filter(item => !item.roles || item.roles.includes(role));
   const filteredDevelopmentItems = developmentItems.filter(item => !item.roles || item.roles.includes(role));
   const filteredCollaborationItems = collaborationItems.filter(item => !item.roles || item.roles.includes(role));
 
-  const settingsItem = { path: '/settings', label: 'Settings', icon: <Settings24Regular />, iconFilled: <Settings24Filled /> };
+  const settingsItem = { path: '/dashboard/settings', label: 'Settings', icon: <Settings24Regular />, iconFilled: <Settings24Filled /> };
 
   return (
     <nav className={mergeClasses(styles.nav, isCollapsed ? styles.navCollapsed : styles.navExpanded)}>

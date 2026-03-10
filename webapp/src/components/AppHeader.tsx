@@ -150,15 +150,16 @@ interface BreadcrumbConfig {
 }
 
 const pageTitles: Record<string, string> = {
+  "/dashboard/": "Dashboard",
   "/dashboard": "Dashboard",
-  "/wellbeing": "Wellbeing & Risks",
-  "/team": "My Team",
-  "/prep": "1:1 Planner",
-  "/signals": "Signals",
-  "/devplan": "Dev Plan",
-  "/feedback360": "360 Feedback",
-  "/member-wellbeing": "Well-Being",
-  "/settings": "Settings",
+  "/dashboard/wellbeing": "Wellbeing & Risks",
+  "/dashboard/team": "My Team",
+  "/dashboard/prep": "1:1 Planner",
+  "/dashboard/signals": "Signals",
+  "/dashboard/devplan": "Dev Plan",
+  "/dashboard/feedback360": "360 Feedback",
+  "/dashboard/member-wellbeing": "Well-Being",
+  "/dashboard/settings": "Settings",
 };
 
 interface AppHeaderProps {
@@ -178,10 +179,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
   const getBreadcrumb = (): BreadcrumbConfig => {
     const path = location.pathname;
     
-    if (path.startsWith("/teams/1/members/")) {
+    if (path.startsWith("/dashboard/teams/1/members/")) {
       return {
         current: "Team Member",
-        parent: { label: "My Team", path: "/team" },
+        parent: { label: "My Team", path: "/dashboard/team" },
       };
     }
     
