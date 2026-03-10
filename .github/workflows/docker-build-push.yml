@@ -65,7 +65,7 @@ jobs:
   build-and-push-webapp:
     name: Build and Push WebApp Image
     runs-on: ubuntu-latest
-    environment: production
+    environment: Env
     permissions:
       contents: read
       packages: write
