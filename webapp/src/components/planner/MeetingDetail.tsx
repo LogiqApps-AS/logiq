@@ -10,6 +10,13 @@ import {
   Checkbox,
   Divider,
   mergeClasses,
+  Spinner,
+  Dialog,
+  DialogSurface,
+  DialogBody,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@fluentui/react-components";
 import {
   Dismiss20Regular,
@@ -24,9 +31,10 @@ import {
   Person20Regular,
 } from "@fluentui/react-icons";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../../hooks/useApiData";
+import { apiClient, type ConversationPrep } from "@/lib/api";
 import type { Meeting } from "@/types";
 
 const useStyles = makeStyles({
@@ -126,6 +134,7 @@ const statusStyles: Record<string, { bg: string; color: string }> = {
 
 interface MeetingDetailProps {
   meeting: Meeting | null;
+  teamId?: string;
   onClose: () => void;
   onToggleTopic: (meetingId: string, topicId: string) => void;
   onDeleteTopic: (meetingId: string, topicId: string) => void;
@@ -140,6 +149,7 @@ interface MeetingDetailProps {
 
 export const MeetingDetail: React.FC<MeetingDetailProps> = ({
   meeting,
+  teamId = "team1",
   onClose,
   onToggleTopic,
   onDeleteTopic,
@@ -155,7 +165,33 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
   const navigate = useNavigate();
   const [newTopic, setNewTopic] = useState("");
   const [newFollowUp, setNewFollowUp] = useState("");
-  const { data: employees = [] } = useEmployees("team1");
+  const [prepOpen, setPrepOpen] = useState(false);
+  const [prepLoading, setPrepLoading] = useState(false);
+  const [prepError, setPrepError] = useState<string | null>(null);
+  const [prep, setPrep] = useState<ConversationPrep | null>(null);
+  const { data: employees = [] } = useEmployees(teamId);
+
+  const handleAiPrep = useCallback(async () => {
+    if (!meeting) return;
+    setPrepOpen(true);
+    setPrepLoading(true);
+    setPrepError(null);
+    setPrep(null);
+    try {
+      const result = await apiClient.triggerMeetingPrep(teamId, meeting.id);
+      setPrep(result);
+    } catch (e) {
+      setPrepError(e instanceof Error ? e.message : "Failed to generate prep");
+    } finally {
+      setPrepLoading(false);
+    }
+  }, [meeting, teamId]);
+
+  const handleAddPrepToAgenda = useCallback(() => {
+    if (!meeting || !prep?.suggestedTopics?.length) return;
+    prep.suggestedTopics.forEach((text) => onAddTopic(meeting.id, text));
+    setPrepOpen(false);
+  }, [meeting, prep, onAddTopic]);
 
   if (!meeting) {
     return (
@@ -202,8 +238,10 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
             appearance="subtle"
             icon={<BrainCircuit20Regular />}
             size="small"
+            onClick={handleAiPrep}
+            disabled={prepLoading}
           >
-            AI Prep
+            {prepLoading ? "Generating…" : "AI Prep"}
           </Button>
           <Button
             appearance="primary"
@@ -369,6 +407,89 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
           View Profile
         </Button>
       </div>
+
+      <Dialog open={prepOpen} onOpenChange={(_, d) => { if (!d.open) setPrepOpen(false); }}>
+        <DialogSurface style={{ maxWidth: "520px", borderRadius: "12px" }}>
+          <DialogBody>
+            <DialogTitle
+              action={<Button appearance="subtle" icon={<Dismiss20Regular />} onClick={() => setPrepOpen(false)} aria-label="Close" />}
+            >
+              AI Prep Brief
+            </DialogTitle>
+            <DialogContent style={{ paddingTop: "12px", display: "flex", flexDirection: "column", gap: "16px" }}>
+              {prepLoading && (
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "24px" }}>
+                  <Spinner size="small" />
+                  <Text>Generating 1:1 brief…</Text>
+                </div>
+              )}
+              {prepError && (
+                <Text style={{ color: tokens.colorPaletteRedForeground1 }}>{prepError}</Text>
+              )}
+              {!prepLoading && prep && (
+                <>
+                  {prep.contextSummary && (
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "6px" }}>Context</Text>
+                      <Text size={200} style={{ color: tokens.colorNeutralForeground2 }}>{prep.contextSummary}</Text>
+                    </div>
+                  )}
+                  {prep.suggestedTopics?.length > 0 && (
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "6px" }}>Suggested topics</Text>
+                      <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                        {prep.suggestedTopics.map((t, i) => (
+                          <li key={i}><Text size={200}>{t}</Text></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {prep.followUpActions?.length > 0 && (
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "6px" }}>Follow-up actions</Text>
+                      <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                        {prep.followUpActions.map((t, i) => (
+                          <li key={i}><Text size={200}>{t}</Text></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {prep.coachTips?.length > 0 && (
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "6px" }}>Coach tips</Text>
+                      <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                        {prep.coachTips.map((t, i) => (
+                          <li key={i}><Text size={200}>{t}</Text></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {prep.questionsToAsk?.length > 0 && (
+                    <div>
+                      <Text weight="semibold" size={200} style={{ display: "block", marginBottom: "6px" }}>Questions to ask</Text>
+                      <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                        {prep.questionsToAsk.map((t, i) => (
+                          <li key={i}><Text size={200}>{t}</Text></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </DialogContent>
+            {!prepLoading && prep && (
+              <DialogActions>
+                <Button appearance="secondary" onClick={() => setPrepOpen(false)}>Close</Button>
+                {prep.suggestedTopics?.length > 0 && (
+                  <Button appearance="primary" onClick={handleAddPrepToAgenda}>
+                    Add topics to agenda
+                  </Button>
+                )}
+              </DialogActions>
+            )}
+          </DialogBody>
+        </DialogSurface>
+      </Dialog>
     </div>
   );
 };

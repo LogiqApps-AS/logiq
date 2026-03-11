@@ -300,6 +300,7 @@ const OneOnOnePlanner = () => {
             />
             <MeetingDetail
               meeting={selectedMeeting}
+              teamId="team1"
               onClose={() => dispatchUI({ type: 'SET_SELECTED_ID', id: null })}
               onToggleTopic={handleToggleTopic}
               onDeleteTopic={handleDeleteTopic}

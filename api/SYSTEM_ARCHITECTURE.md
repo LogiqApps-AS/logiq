@@ -93,7 +93,7 @@ So: **repositories** are the single source of storage access. **Controllers** us
 | GET | `api/teams/{teamId}/meetings` | MeetingsController.GetUpcoming | ✅ `apiClient.getMeetings` → useMeetings (OneOnOnePlanner) |
 | GET | `api/teams/{teamId}/meetings/past` | MeetingsController.GetPast | ✅ `apiClient.getPastMeetings` → usePastMeetings (OneOnOnePlanner) |
 | GET | `api/teams/{teamId}/meetings/deferred-topics` | MeetingsController.GetDeferredTopics | ✅ `apiClient.getDeferredTopics` → useDeferredTopics (OneOnOnePlanner) |
-| POST | `api/teams/{teamId}/meetings/{meetingId}/prep` | MeetingsController.TriggerPrep | ⚠️ `apiClient.triggerMeetingPrep` exists but **no UI currently calls it** (no “Generate prep” in 1:1 Planner) |
+| POST | `api/teams/{teamId}/meetings/{meetingId}/prep` | MeetingsController.TriggerPrep | ✅ `apiClient.triggerMeetingPrep` → **AI Prep** button in MeetingDetail (1:1 Planner); dialog with brief and "Add topics to agenda" (no “Generate prep” in 1:1 Planner) |
 
 ### 3.3 Members
 
@@ -101,9 +101,7 @@ So: **repositories** are the single source of storage access. **Controllers** us
 |--------|----------|------------|--------------|
 | GET | `api/members/{memberId}/dashboard?teamId=` | MembersController.GetDashboard | ✅ `apiClient.getMemberDashboard` → useMemberDashboard (MemberDashboardWidgets, MemberPrep, MemberDevPlan, MemberDelivery, AICoachPanel) |
 | GET | `api/members/{memberId}/signals?teamId=` | MembersController.GetMemberSignals | ✅ `apiClient.getMemberSignals` → useMemberSignals (MemberDashboardWidgets, MemberSignals, AICoachPanel) |
-| POST | `api/members/{memberId}/prep?teamId=` | MembersController.GetPrep | ❌ **Not in apiClient**; webapp does not call this (equivalent to prep by memberId without a meeting) |
-| GET | `api/me/dashboard?memberId=1&teamId=` | MembersController.GetMyDashboard | ❌ **Not in apiClient**; webapp uses `getMemberDashboard("1")` instead |
-| GET | `api/me/signals?memberId=1&teamId=` | MembersController.GetMySignals | ❌ **Not in apiClient**; webapp uses `getMemberSignals("1")` instead |
+| POST | `api/members/{memberId}/prep?teamId=` | MembersController.GetPrep | ✅ `apiClient.getMemberPrep` → **Generate prep** button on MemberPrep page; shows AI-generated brief (topics, coach tips, follow-ups, questions) |
 
 ### 3.4 Copilot & Coach
 
@@ -114,21 +112,13 @@ So: **repositories** are the single source of storage access. **Controllers** us
 
 ### 3.5 Search (RAG / Azure AI Search)
 
-| Method | Endpoint | Controller | Webapp usage |
-|--------|----------|------------|--------------|
-| GET | `api/search/status` | SearchController.GetStatus | ❌ **Not in apiClient**; for ops/debug (index name + document count) |
-
 **RAG index and retrieval:** The search index is created and seeded by `SearchIndexProvisioningService` at startup. The index has fields `id`, `title`, `content`, and a vector field (`contentVector` by default). Seed HR documents are embedded at provisioning time via `IEmbeddingService` (Azure OpenAI embeddings); each document’s `title` and `content` are concatenated and embedded, and the resulting vector is stored in `contentVector`. **Retrieval** (`IRagService.RetrieveContextAsync`): the query is embedded with `IEmbeddingService.GetEmbeddingAsync`; if an embedding is returned, **vector search** is used (Azure AI Search vector query on `contentVector`); otherwise **keyword search** is used as fallback. This provides semantic search when embeddings are configured.
 
 ---
 
 ## 4. Summary: Endpoints Not Used by the Webapp
 
-- **GET `api/me/dashboard`** – Webapp uses `GET api/members/1/dashboard` (or current member id) instead.
-- **GET `api/me/signals`** – Webapp uses `GET api/members/1/signals` instead.
-- **POST `api/members/{memberId}/prep`** – Not exposed in apiClient; could be used for “prep for this member” without picking a meeting.
-- **POST `api/teams/{teamId}/meetings/{meetingId}/prep`** – Exposed as `triggerMeetingPrep` but no button or flow in the UI calls it yet.
-- **GET `api/search/status`** – Intended for verification of RAG index; not needed by the app UI.
+All prep and member endpoints used by the webapp are integrated: **POST** `api/teams/{teamId}/meetings/{meetingId}/prep` is triggered from the 1:1 Planner meeting detail (**AI Prep** button), and **POST** `api/members/{memberId}/prep` is triggered from the 1:1 Prep page (**Generate prep** button). The webapp uses `GET api/members/{memberId}/dashboard` and `GET api/members/{memberId}/signals` for member data.
 
 ---
 
@@ -277,8 +267,8 @@ This flow is triggered only from the **API** (no webapp button currently). Two e
 
 | Step | Where | What happens |
 |------|--------|----------------|
-| **1. Entry** | (Future) 1:1 Planner or Prep page | Ideally: user selects a meeting and clicks “Generate prep”. Today: **no UI calls these endpoints**; `apiClient.triggerMeetingPrep(teamId, meetingId)` exists but is never invoked. |
-| **2. API call** | (If wired) e.g. `OneOnOnePlanner.tsx` or `MemberPrep.tsx` | Would call **POST** `api/teams/team1/meetings/{meetingId}/prep` or a **POST** `api/members/{memberId}/prep` client method. |
+| **1. Entry** | 1:1 Planner or Prep page | Ideally: user selects a meeting and clicks “Generate prep”. Today: **no UI calls these endpoints**; `apiClient.triggerMeetingPrep(teamId, meetingId)` exists but is never invoked. |
+| **2. API call** | `MeetingDetail.tsx` or `MemberPrep.tsx` | **POST** `api/teams/team1/meetings/{meetingId}/prep` via `triggerMeetingPrep`, or **POST** `api/members/{memberId}/prep` via `getMemberPrep`. |
 | **3. Controller** | `MeetingsController.TriggerPrep` or `MembersController.GetPrep` | Meetings: loads meeting, gets `memberId` from meeting id; Members: uses route `memberId` + query `teamId`. Both call `orchestrator.PrepareConversationAsync(teamId, memberId, cancellationToken)`. |
 | **4. Orchestrator** | `AnalyzerOrchestrator.PrepareConversationAsync` | Runs **in parallel:** `wellbeingAnalyzer.AnalyzeTeamAsync(teamId)`, `skillsAnalyzer.AnalyzeTeamAsync(teamId)`, `deliveryAnalyzer.AnalyzeTeamAsync(teamId)`. Awaits all three, then calls `conversationPrepAgent.PrepareAsync(teamId, memberId, wellbeingResult, skillsResult, deliveryResult, cancellationToken)`. |
 | **5a. WellbeingRiskAnalyzer** | Called by orchestrator | **MCP tool calls:** `wellbeingTools.GetPulseResults(teamId)`, `GetSafetyScores(teamId)`, `GetSentimentTrends(teamId)`, `hrTools.ListAbsences(teamId)`. Builds prompt with that JSON; creates **ChatCompletionAgent**; invokes LLM; parses JSON to `WellbeingAnalysis`. Persists high/critical risk as team signals via `signalRepository.UpsertTeamSignalAsync`. Returns `WellbeingAnalysis`. |
@@ -286,7 +276,7 @@ This flow is triggered only from the **API** (no webapp button currently). Two e
 | **5c. DeliveryWorkloadAnalyzer** | Called by orchestrator | **MCP tool calls:** `deliveryTools.GetSprintSummary(teamId)`, `GetPrMetrics(teamId)`, `GetMeetingLoad(teamId)`. Prompt + LLM; parses to `DeliveryAnalysis`. Persists overloaded/critical workload as team signals. Returns it. |
 | **6. ConversationPrepAgent** | Called by orchestrator with the three results | **Repos:** `employeeRepository.GetByIdAsync(teamId, memberId)`, `memberRepository` not used for dashboard in this path. **MCP tool calls:** `hrTools.ListMeetings(teamId)`, `hrTools.GetDeferredTopics(teamId)`. Extracts member-specific slices from the three analyses (risk, skills insight, delivery insight). Builds prompt; **ChatCompletionAgent** → LLM; parses JSON to `ConversationPrep`. |
 | **7. Response** | Controller | Returns 200 OK with `ConversationPrep` (suggestedTopics, followUpActions, coachTips, questionsToAsk, contextSummary, etc.). |
-| **8. Back to UI** | (If wired) | Would show the brief in 1:1 Planner meeting detail or on Prep page. Today the **Member Prep** page shows `dashboard.prepTopics` from **GET** member dashboard (seeded or synthesized), not from this prep API. |
+| **8. Back to UI** | MeetingDetail dialog or MemberPrep page | MeetingDetail shows the brief in a dialog with "Add topics to agenda". MemberPrep shows the generated brief (context, topics, coach tips, follow-ups, questions) and replaces the default dashboard-based sections until the user generates again. |
 
 **Data sources:** Orchestrator uses **three analyzers** (each uses MCP tool classes → repos) and **ConversationPrepAgent** (repos + HrDataGatewayTools). No RAG in this pipeline.
 
