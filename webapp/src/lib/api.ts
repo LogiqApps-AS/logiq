@@ -130,4 +130,9 @@ export const apiClient = {
     fetchJson<ConversationPrep>(`/api/teams/${teamId}/meetings/${meetingId}/prep`, {
       method: "POST",
     }),
+
+  getMemberPrep: (memberId: string, teamId = DEFAULT_TEAM_ID): Promise<ConversationPrep> =>
+    fetchJson<ConversationPrep>(`/api/members/${memberId}/prep?teamId=${teamId}`, {
+      method: "POST",
+    }),
 };
