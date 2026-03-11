@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Logiq.Api.Agents.Abstracts;
 using Logiq.Api.Contracts;
 using Logiq.Api.Mcp;
@@ -102,9 +102,9 @@ public sealed class ConversationPrepAgent(
 
         string responseText = string.Empty;
         await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
-            responseText += message.Content;
+            responseText += message.Content ?? string.Empty;
 
-        ConversationPrep prep = TryParsePrep(responseText, teamId, memberId, member?.Name ?? "Unknown");
+        ConversationPrep prep = TryParsePrep(responseText, teamId, memberId, member?.Name ?? "Unknown", logger);
 
         await PersistPrepToDashboard(teamId, memberId, prep, cancellationToken);
 
@@ -127,18 +127,29 @@ public sealed class ConversationPrepAgent(
         }
     }
 
-    private static ConversationPrep TryParsePrep(string json, string teamId, string memberId, string memberName)
+    private static ConversationPrep TryParsePrep(string raw, string teamId, string memberId, string memberName, ILogger logger)
     {
+        string json = AgentJsonHelper.ExtractJsonFromResponse(raw);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            logger.LogWarning("ConversationPrep: LLM response empty or no JSON found. Length={Length}", raw.Length);
+            return FallbackPrep(teamId, memberId, memberName);
+        }
+
         try
         {
             ConversationPrep? result = JsonSerializer.Deserialize<ConversationPrep>(json,
 #pragma warning disable CA1869
-                new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 #pragma warning restore CA1869
-            return result ?? FallbackPrep(teamId, memberId, memberName);
+            if (result is not null && (result.SuggestedTopics.Count > 0 || !string.IsNullOrWhiteSpace(result.ContextSummary)))
+                return result;
+            logger.LogWarning("ConversationPrep: Deserialized but result null or empty content");
+            return FallbackPrep(teamId, memberId, memberName);
         }
-        catch
+        catch (JsonException ex)
         {
+            logger.LogWarning(ex, "ConversationPrep: JSON parse failed. First 200 chars: {Preview}", json.Length > 200 ? json[..200] : json);
             return FallbackPrep(teamId, memberId, memberName);
         }
     }

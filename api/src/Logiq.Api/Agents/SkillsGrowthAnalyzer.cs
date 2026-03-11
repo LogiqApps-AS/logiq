@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Logiq.Api.Agents.Abstracts;
 using Logiq.Api.Contracts;
 using Logiq.Api.Mcp;
@@ -73,21 +73,33 @@ public sealed class SkillsGrowthAnalyzer(
         await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
             responseText += message.Content;
 
-        return TryParseAnalysis(responseText, teamId);
+        return TryParseAnalysis(responseText, teamId, logger);
     }
 
-    private static SkillsAnalysis TryParseAnalysis(string json, string teamId)
+    private static SkillsAnalysis TryParseAnalysis(string raw, string teamId, ILogger logger)
     {
+        string json = AgentJsonHelper.ExtractJsonFromResponse(raw);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            logger.LogWarning("SkillsAnalysis: empty response or no JSON extracted");
+            return FallbackAnalysis(teamId);
+        }
         try
         {
             SkillsAnalysis? result = JsonSerializer.Deserialize<SkillsAnalysis>(json,
 #pragma warning disable CA1869
-                new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true });
 #pragma warning restore CA1869
-            return result ?? FallbackAnalysis(teamId);
+            if (result == null)
+            {
+                logger.LogWarning("SkillsAnalysis: Deserialized but result null");
+                return FallbackAnalysis(teamId);
+            }
+            return result;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "SkillsAnalysis: JSON parse failed");
             return FallbackAnalysis(teamId);
         }
     }

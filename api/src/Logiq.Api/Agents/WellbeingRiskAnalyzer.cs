@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Logiq.Api.Agents.Abstracts;
 using Logiq.Api.Contracts;
 using Logiq.Api.Mcp;
@@ -81,7 +81,7 @@ public sealed class WellbeingRiskAnalyzer(
         await foreach (ChatMessageContent message in chat.InvokeAsync(cancellationToken))
             responseText += message.Content;
 
-        WellbeingAnalysis analysis = TryParseAnalysis(responseText, teamId);
+        WellbeingAnalysis analysis = TryParseAnalysis(responseText, teamId, logger);
 
         await PersistSignalsToStorage(teamId, analysis, cancellationToken);
 
@@ -108,18 +108,30 @@ public sealed class WellbeingRiskAnalyzer(
         }
     }
 
-    private static WellbeingAnalysis TryParseAnalysis(string json, string teamId)
+    private static WellbeingAnalysis TryParseAnalysis(string raw, string teamId, ILogger logger)
     {
+        string json = AgentJsonHelper.ExtractJsonFromResponse(raw);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            logger.LogWarning("WellbeingAnalysis: empty response or no JSON extracted");
+            return FallbackAnalysis(teamId);
+        }
         try
         {
 #pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
             WellbeingAnalysis? result = JsonSerializer.Deserialize<WellbeingAnalysis>(json,
-                new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true });
 #pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
-            return result ?? FallbackAnalysis(teamId);
+            if (result == null)
+            {
+                logger.LogWarning("WellbeingAnalysis: Deserialized but result null");
+                return FallbackAnalysis(teamId);
+            }
+            return result;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "WellbeingAnalysis: JSON parse failed");
             return FallbackAnalysis(teamId);
         }
     }
