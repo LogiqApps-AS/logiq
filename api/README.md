@@ -1,89 +1,11 @@
-# LogIQ — .NET 10 Backend + Multi-Agent Pipeline
+﻿# LogIQ — .NET 10 Backend + Multi-Agent Pipeline
 
 AI Dev Days Hackathon · Best Multi-Agent System
 
-## Architecture Overview
 
-```
-Azure Table Storage
-       │
-       ▼
-┌──────────────────────────────────────────────┐
-│              MCP Servers (in-process)         │
-│  HrDataGateway · DeliveryMetrics             │
-│  LearningSkills · WellbeingSignals           │
-└──────────────────┬───────────────────────────┘
-                   │  MCP tool calls
-       ┌───────────┼───────────┐
-       ▼           ▼           ▼
- Wellbeing    Skills &    Delivery &
-  & Risk      Growth      Workload
- Analyzer    Analyzer     Analyzer
-       └───────────┬───────────┘
-                   │  A2A: analysis results
-                   ▼
-          Conversation Prep Agent
-          (synthesizes all signals)
-                   │
-         ┌─────────┴──────────┐
-         ▼                    ▼
-  People Partner         Development
-    Copilot               Coach
-  (Team Lead)          (Team Member)
-         │                    │
-         └─────────┬──────────┘
-                   ▼
-             REST API
-         ASP.NET Core 10
-                   │
-                   ▼
-           React Webapp
-       (Fluent UI v9 + Vite)
-```
 
-## Agent Pipeline
 
-### Layer 1 — MCP Servers (C# SDK)
-Four `[McpServerToolType]` classes expose Azure Table Storage data as MCP tools:
 
-| Server | Key Tools |
-|--------|-----------|
-| `HrDataGatewayTools` | `GetEmployeeProfile`, `ListTeamEmployees`, `ListMeetings`, `GetDeferredTopics` |
-| `DeliveryMetricsTools` | `GetSprintSummary`, `GetPrMetrics`, `GetMeetingLoad` |
-| `LearningSkillsTools` | `GetTrainingRecords`, `GetIdpGoals`, `GetSkillAssessments`, `GetMemberSkillProfile` |
-| `WellbeingSignalsTools` | `GetPulseResults`, `GetSafetyScores`, `GetTeamSignals`, `GetSentimentTrends` |
-
-### Layer 2 — Analyzer Agents (Semantic Kernel)
-Three `ChatCompletionAgent` instances run in parallel via `Task.WhenAll`:
-
-- **WellbeingRiskAnalyzer** — detects burnout, sick-leave spikes, psych-safety drops → `WellbeingAnalysis`
-- **SkillsGrowthAnalyzer** — maps skill gaps, IDP progress, learning debt → `SkillsAnalysis`
-- **DeliveryWorkloadAnalyzer** — flags sprint anomalies, PR velocity drops, overload → `DeliveryAnalysis`
-
-### Layer 3 — Conversation Prep Agent (A2A)
-Receives all three `*Analysis` records via Agent-to-Agent pattern, combines with HR context, and generates `ConversationPrep` with:
-- Suggested 1:1 topics ranked by urgency
-- Follow-up actions from previous meetings
-- Coach tips and empathetic questions
-- Context summary for the lead
-
-### Layer 4 — Role-Specific Copilots
-- **PeoplePartnerCopilot** (Team Lead) — RAG via Azure AI Search, team-wide context, proactive recommendations
-- **DevelopmentCoach** (Team Member) — private coaching with individual employee context, career guidance
-
-## Technology Stack
-
-| Component | Technology |
-|-----------|------------|
-| Backend framework | ASP.NET Core 10, .NET 10 |
-| Agent orchestration | Microsoft Semantic Kernel 1.29 |
-| Agent communication | A2A via shared POCO contracts |
-| MCP servers | ModelContextProtocol C# SDK 0.1.0-preview.11 |
-| LLM | Azure OpenAI (GPT-4o) |
-| RAG | Azure AI Search |
-| Storage | Azure Table Storage |
-| API docs | Scalar (OpenAPI) |
-| Frontend | React 18, Vite, Fluent UI v9, TanStack Query |
 
 ## Running Locally
 
