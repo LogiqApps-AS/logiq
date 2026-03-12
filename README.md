@@ -46,7 +46,7 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
      │   Team Lead     │              │  Team Member    │
      │ (People Partner)│              │ (IC / Employee) │
      └────────┬────────┘              └────────┬────────┘
-              │ uses                           │ uses
+              │                                │
               └──────────────┬─────────────────┘
                              ▼
               ┌──────────────────────────────────────────┐
@@ -56,7 +56,6 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
               │  coach, wellbeing/skills/delivery       │
               └──────────────┬───────────────────────────┘
          ┌───────────────────┼───────────────────┐
-         │ uses              │ uses              │ uses
          ▼                   ▼                   ▼
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
 │ Azure OpenAI    │ │ Azure AI Search  │ │ Azure Table      │
@@ -64,7 +63,7 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
 │                 │ │  keyword)        │ │ (6 tables)       │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
          ▲
-         │ uses (optional)
+         │
 ┌─────────────────┐
 │ External MCP    │
 │ Client (POST    │
@@ -145,70 +144,46 @@ Containers **inside** LogIQ and how the backend is structured.
 
 ## Flow sequence diagrams (Mermaid)
 
-Mermaid **sequence diagrams** for the main flows: Copilot (lead), Coach (member), and Conversation prep.
+Mermaid **sequence diagrams** for the main flows: Copilot/Coach (chat), and Conversation prep.
 
-### Copilot (lead) — team context + RAG
+### Copilot (lead) & Coach (member) — chat with RAG
+
+One flow: **lead** uses team context (PeoplePartnerCopilot); **member** uses individual context (DevelopmentCoach). Both use repos + RAG + Azure OpenAI.
 
 ```mermaid
 sequenceDiagram
-  participant U as Team Lead
+  participant U as User (Lead or Member)
   participant W as Web App
   participant API as REST API
-  participant Copilot as PeoplePartnerCopilot
+  participant Agent as Copilot or Coach
   participant Repos as Repositories
   participant RAG as RAG Service
   participant Search as Azure AI Search
   participant OpenAI as Azure OpenAI
 
-  U->>W: Open Copilot, send message
-  W->>API: POST api/copilot/chat { message, teamId }
-  API->>Copilot: ChatAsync(teamId, request)
+  U->>W: Open Copilot (lead) or AI Coach (member), send message
+  alt Lead — Copilot
+    W->>API: POST api/copilot/chat { message, teamId }
+    API->>Agent: PeoplePartnerCopilot.ChatAsync(teamId, request)
+    Agent->>Repos: ListByTeamAsync, GetCurrentAsync (KPIs), ListTeamSignalsAsync
+    Repos-->>Agent: employees, KPIs, signals
+  else Member — Coach
+    W->>API: POST api/coach/chat { message, memberId, teamId }
+    API->>Agent: DevelopmentCoach.ChatAsync(memberId, request)
+    Agent->>Repos: GetByIdAsync (employee), GetDashboardAsync (member)
+    Repos-->>Agent: employee, dashboard
+  end
 
-  Copilot->>Repos: ListByTeamAsync, GetCurrentAsync (KPIs), ListTeamSignalsAsync
-  Repos-->>Copilot: employees, KPIs, signals
-  Copilot->>RAG: RetrieveContextAsync(message, 5)
+  Agent->>RAG: RetrieveContextAsync(message, 5)
   RAG->>Search: vector + keyword search
   Search-->>RAG: snippets
-  RAG-->>Copilot: context
+  RAG-->>Agent: context
 
-  Copilot->>Copilot: Build system prompt (team + RAG)
-  Copilot->>OpenAI: ChatCompletionAgent.InvokeAsync
-  OpenAI-->>Copilot: reply
+  Agent->>Agent: Build system prompt (team or member + RAG)
+  Agent->>OpenAI: ChatCompletionAgent.InvokeAsync
+  OpenAI-->>Agent: reply
 
-  Copilot-->>API: ChatResponse { reply, suggestions }
-  API-->>W: 200 OK
-  W-->>U: Show reply and suggestion chips
-```
-
-### Coach (member) — member context + RAG
-
-```mermaid
-sequenceDiagram
-  participant U as Team Member
-  participant W as Web App
-  participant API as REST API
-  participant Coach as DevelopmentCoach
-  participant Repos as Repositories
-  participant RAG as RAG Service
-  participant Search as Azure AI Search
-  participant OpenAI as Azure OpenAI
-
-  U->>W: Open AI Coach, send message
-  W->>API: POST api/coach/chat { message, memberId, teamId }
-  API->>Coach: ChatAsync(memberId, request)
-
-  Coach->>Repos: GetByIdAsync (employee), GetDashboardAsync (member)
-  Repos-->>Coach: employee, dashboard
-  Coach->>RAG: RetrieveContextAsync(message, 5)
-  RAG->>Search: vector + keyword search
-  Search-->>RAG: snippets
-  RAG-->>Coach: context
-
-  Coach->>Coach: Build prompt (member + RAG)
-  Coach->>OpenAI: ChatCompletionAgent.InvokeAsync
-  OpenAI-->>Coach: reply
-
-  Coach-->>API: ChatResponse { reply, suggestions }
+  Agent-->>API: ChatResponse { reply, suggestions }
   API-->>W: 200 OK
   W-->>U: Show reply and suggestion chips
 ```
@@ -536,4 +511,318 @@ logiq/
 
 ---
 
-_Built for the AI Dev Days Hackathon. Backend and architecture details: [api/README.md](api/README.md), [api/SYSTEM_ARCHITECTURE.md](api/SYSTEM_ARCHITECTURE.md)._
+## 5. Entities (Domain Models)
+
+| Entity               | Description                                                                                                                                 | Main storage / source                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **Employee**         | Team member: id, name, role, tenure, KPI scores (wellbeing, skills, motivation, delivery), churn risk, meeting hours, etc.                  | EmployeeRepository (Azure Table)                 |
+| **Signal**           | Team-level alert (e.g. wellbeing, delivery); id, type, title, message, employeeId, time, action                                             | SignalRepository                                 |
+| **MemberSignal**     | Member-level signal (warning, opportunity, recognition, wellbeing, milestone)                                                               | SignalRepository (member partition)              |
+| **Meeting**          | 1:1 meeting: id, name, role, date, duration, topics, notes, followUps                                                                       | MeetingRepository                                |
+| **DeferredTopic**    | Postponed topic from a 1:1 (id, text, person)                                                                                               | MeetingRepository                                |
+| **TeamKpis**         | Team KPIs: wellbeing, skills, motivation, churn, delivery (score, status, label, trend, description)                                        | TeamKpiRepository                                |
+| **TeamFinancials**   | atRiskCount, totalEmployees, churnExposure, totalPeopleRisk                                                                                 | TeamKpiRepository                                |
+| **SkillsMatrix**     | allSkills[], employeeSkills{ [id]: skills[] }                                                                                               | MemberRepository (blob in AnalysisResults table) |
+| **MemberDetail**     | Rich profile: department, skills, roleHistory, projects, feedback, training, signals, certifications, counts                                | MemberRepository (blob)                          |
+| **MemberDashboard**  | employeeId, kpis, signals, devGoals, learningItems, skills, sprintContributions, deliveryStats, prepTopics, coachTips, wins, questionsToAsk | MemberRepository (blob)                          |
+| **ConversationPrep** | 1:1 brief: teamId, memberId, memberName, suggestedTopics, followUpActions, coachTips, questionsToAsk, contextSummary                        | Produced by ConversationPrepAgent (orchestrator) |
+
+---
+
+## 6. Agents
+
+| Agent                        | Purpose                                                                                                        | Used by                                         | Data access                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
+| **WellbeingRiskAnalyzer**    | Analyzes team wellbeing, churn risk, engagement; produces WellbeingAnalysis and persists high/critical signals | AnalyzerOrchestrator                            | WellbeingSignalsTools, HrDataGatewayTools (→ repos)                     |
+| **SkillsGrowthAnalyzer**     | Analyzes skills coverage, IDP progress, learning; produces SkillsAnalysis                                      | AnalyzerOrchestrator                            | LearningSkillsTools (→ repos)                                           |
+| **DeliveryWorkloadAnalyzer** | Analyzes velocity, meeting load, overtime; produces DeliveryAnalysis and persists workload signals             | AnalyzerOrchestrator                            | DeliveryMetricsTools (→ repos)                                          |
+| **ConversationPrepAgent**    | Builds 1:1 brief (ConversationPrep) from wellbeing + skills + delivery + meetings/deferred                     | AnalyzerOrchestrator (PrepareConversationAsync) | HrDataGatewayTools, IEmployeeRepository, IMemberRepository              |
+| **PeoplePartnerCopilot**     | Chat for leads: team health, 1:1 prep, signals, KPIs; uses RAG for knowledge                                   | CopilotController                               | IEmployeeRepository, ITeamKpiRepository, ISignalRepository, IRagService |
+| **DevelopmentCoach**         | Chat for members: growth, 1:1 prep, goals; uses RAG                                                            | CoachController                                 | IEmployeeRepository, IMemberRepository, IRagService                     |
+
+**Orchestrator:** `AnalyzerOrchestrator` runs the three analyzers (in parallel when needed) and then calls `ConversationPrepAgent` with their results. It is used only for **conversation prep** from the API: `POST api/teams/{teamId}/meetings/{meetingId}/prep` and `POST api/members/{memberId}/prep`.
+
+---
+
+## 7. MCP Tools (Server Tool Classes)
+
+These classes are registered as MCP server tools (exposed at `POST /mcp`) and are **also** injected into agents and called directly in process.
+
+| Tool class                | Methods                                                                                          | Used by agents                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **WellbeingSignalsTools** | GetPulseResults, GetSafetyScores, GetTeamSignals, GetSentimentTrends, GetMemberSignals           | WellbeingRiskAnalyzer                                                                         |
+| **HrDataGatewayTools**    | GetEmployeeProfile, ListTeamEmployees, ListAbsences, GetOrgTree, ListMeetings, GetDeferredTopics | WellbeingRiskAnalyzer (ListAbsences), ConversationPrepAgent (ListMeetings, GetDeferredTopics) |
+| **LearningSkillsTools**   | GetTrainingRecords, GetIdpGoals, GetSkillAssessments, GetMemberSkillProfile                      | SkillsGrowthAnalyzer                                                                          |
+| **DeliveryMetricsTools**  | GetSprintSummary, GetPrMetrics, GetMeetingLoad                                                   | DeliveryWorkloadAnalyzer                                                                      |
+
+All of these tools use **repositories** (EmployeeRepository, SignalRepository, MeetingRepository, MemberRepository) to read data and return JSON strings.
+
+---
+
+## 8. Communication Flows
+
+### 8.1 Webapp → API (REST)
+
+- **Lead dashboard (Index):** employees, signals, team KPIs, team financials.
+- **My Team:** employees.
+- **Wellbeing Risks:** employees, signals.
+- **1:1 Planner:** meetings, past meetings, deferred topics, employees (MeetingDetail uses employees for “View profile”).
+- **Prep / Dev Plan / Delivery / Signals (member):** member dashboard and/or member signals (memberId often `"1"`).
+- **Team Member Detail:** employee + member detail.
+- **Skills tab:** employees + skills matrix.
+- **Copilot / Coach:** POST chat with message, optional conversationId, teamId, memberId.
+
+### 8.2 API → Agents (Prep)
+
+1. **MeetingsController** or **MembersController** receives prep request.
+2. Controller calls **AnalyzerOrchestrator.PrepareConversationAsync(teamId, memberId)**.
+3. Orchestrator runs **WellbeingRiskAnalyzer**, **SkillsGrowthAnalyzer**, **DeliveryWorkloadAnalyzer** in parallel (each calls MCP tool classes, which use repos).
+4. Orchestrator passes the three analysis results to **ConversationPrepAgent.PrepareAsync**.
+5. ConversationPrepAgent uses **HrDataGatewayTools** (ListMeetings, GetDeferredTopics) and repos (employee, dashboard), then calls the LLM and returns **ConversationPrep**.
+
+### 8.3 API → Agents (Chat)
+
+- **Copilot:** Controller → **PeoplePartnerCopilot.ChatAsync** → loads employees, KPIs, signals, RAG context → LLM → **ChatResponse**.
+- **Coach:** Controller → **DevelopmentCoach.ChatAsync** → loads employee, member dashboard, RAG context → LLM → **ChatResponse**.
+
+### 8.4 MCP Server (External)
+
+- **POST /mcp** exposes the same MCP tool classes (WellbeingSignalsTools, HrDataGatewayTools, LearningSkillsTools, DeliveryMetricsTools) so external MCP clients can call the same capabilities (e.g. GetPulseResults, ListMeetings) over the MCP protocol.
+
+---
+
+## 9. Storage (Repositories)
+
+Only **six** Azure Table Storage tables are used (see `StorageOptions` and appsettings):
+
+| Repository             | Table(s)                                                                                                            | Used by                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **EmployeeRepository** | EmployeesTable                                                                                                      | Controllers, MCP tools, Copilot, Coach, Orchestrator/agents                                  |
+| **SignalRepository**   | SignalsTable (team signals: PartitionKey=teamId; member signals: PartitionKey=teamId:memberId, IsMemberSignal=true) | Controllers, WellbeingSignalsTools, WellbeingRiskAnalyzer, DeliveryWorkloadAnalyzer, Copilot |
+| **MeetingRepository**  | MeetingsTable, DeferredTopicsTable                                                                                  | Controllers, HrDataGatewayTools, ConversationPrepAgent                                       |
+| **TeamKpiRepository**  | TeamKpiSnapshotsTable (KPIs + financials in same table)                                                             | Controllers, Copilot, Orchestrator (writes KPIs after full analysis)                         |
+| **MemberRepository**   | AnalysisResultsTable (blobs: detail, dashboard, skills by key)                                                      | Controllers, LearningSkillsTools, ConversationPrepAgent, Coach                               |
+
+Unused config keys (MeetingTopicsTable, FollowUpsTable, MemberSkillsTable, etc.) have been removed; topics/follow-ups are stored as JSON on Meeting entities, and member detail/dashboard/skills are in AnalysisResultsTable.
+
+---
+
+## 10. Agent flows: from web page to API to agent
+
+For each agent (and the conversation-prep pipeline), this section traces the full flow: **web page → user action → API call → controller → agent(s) → data sources → LLM → response back to UI**.
+
+---
+
+### 10.1 People Partner Copilot (lead/people partner chat)
+
+| Step               | Where                            | What happens                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Entry**       | Any page (lead view)             | App shell shows **Copilot FAB** (floating button). User clicks it.                                                                                                                                                                                                                                                                                                                                                  |
+| **2. UI**          | `AppShell.tsx` / `App.tsx`       | `CopilotPanel` opens (slide-out or modal). Rendered for **lead** role.                                                                                                                                                                                                                                                                                                                                              |
+| **3. User action** | `CopilotPanel.tsx`               | User types a message and sends (e.g. “Which employees are at risk?”).                                                                                                                                                                                                                                                                                                                                               |
+| **4. API call**    | `lib/api.ts`                     | `apiClient.copilotChat({ message, teamId, conversationId })` → **POST** `api/copilot/chat` with body `{ message, conversationId?, teamId? }`.                                                                                                                                                                                                                                                                       |
+| **5. Controller**  | `CopilotController.Chat`         | Receives request; `teamId = request.TeamId ?? "team1"`. Calls `copilot.ChatAsync(teamId, request, cancellationToken)`.                                                                                                                                                                                                                                                                                              |
+| **6. Agent**       | `PeoplePartnerCopilot.ChatAsync` | **Data load (repos, no MCP):** `employeeRepository.ListByTeamAsync(teamId)`, `kpiRepository.GetCurrentAsync(teamId)`, `signalRepository.ListTeamSignalsAsync(teamId)`, `ragService.RetrieveContextAsync(message, 5)`. Builds system prompt with team size, at-risk list, KPIs, signal summary, and RAG snippet. Creates **ChatCompletionAgent** (Semantic Kernel) with that prompt, adds user message, invokes LLM. |
+| **7. Response**    | Same agent                       | Returns `ChatResponse { conversationId, reply, suggestions }`. Controller returns 200 OK with that JSON.                                                                                                                                                                                                                                                                                                            |
+| **8. Back to UI**  | `CopilotPanel.tsx`               | Displays `reply` in chat thread; shows `suggestions` as quick-reply buttons.                                                                                                                                                                                                                                                                                                                                        |
+
+**Data sources (no MCP in this path):** `IEmployeeRepository`, `ITeamKpiRepository`, `ISignalRepository`, `IRagService` (Azure AI Search).
+
+---
+
+### 10.2 Development Coach (member chat)
+
+| Step               | Where                               | What happens                                                                                                                                                                                                                                                                                                                                  |
+| ------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Entry**       | Any page (member view)              | Same **Copilot FAB**; when in **member** role, opening it can show **AI Coach** (or user switches to Coach). `AICoachPanel` is opened (e.g. from nav or FAB).                                                                                                                                                                                 |
+| **2. UI**          | `AppShell.tsx` / `AICoachPanel.tsx` | `AICoachPanel` opens with `memberId` (default `"1"`), `teamId` (default `"team1"`). Uses `useMemberDashboard(memberId, teamId)` for prep topics in context.                                                                                                                                                                                   |
+| **3. User action** | `AICoachPanel.tsx`                  | User types a message (e.g. “Help me prepare for my 1:1”).                                                                                                                                                                                                                                                                                     |
+| **4. API call**    | `lib/api.ts`                        | `apiClient.coachChat({ message, memberId, teamId, conversationId })` → **POST** `api/coach/chat` with body `{ message, conversationId?, teamId?, memberId? }`.                                                                                                                                                                                |
+| **5. Controller**  | `CoachController.Chat`              | Receives request; `memberId = request.MemberId ?? "1"`. Calls `coach.ChatAsync(memberId, request, cancellationToken)`.                                                                                                                                                                                                                        |
+| **6. Agent**       | `DevelopmentCoach.ChatAsync`        | **Data load (repos, no MCP):** `employeeRepository.GetByIdAsync(teamId, memberId)`, `memberRepository.GetDashboardAsync(teamId, memberId)`, `ragService.RetrieveContextAsync(message, 5)`. Builds member context (name, role, tenure, KPIs, IDP progress, prep topics, RAG). Creates **ChatCompletionAgent**, adds user message, invokes LLM. |
+| **7. Response**    | Same agent                          | Returns `ChatResponse { conversationId, reply, suggestions }`. Controller returns 200 OK.                                                                                                                                                                                                                                                     |
+| **8. Back to UI**  | `AICoachPanel.tsx`                  | Displays reply and suggestion chips.                                                                                                                                                                                                                                                                                                          |
+
+**Data sources (no MCP in this path):** `IEmployeeRepository`, `IMemberRepository`, `IRagService`.
+
+---
+
+### 10.3 Conversation prep (1:1 brief) — orchestrated pipeline
+
+This flow is triggered only from the **API** (no webapp button currently). Two endpoints can start it:
+
+- **POST** `api/teams/{teamId}/meetings/{meetingId}/prep` (MeetingsController) — derives `memberId` from the meeting.
+- **POST** `api/members/{memberId}/prep?teamId=` (MembersController) — prep by member only.
+
+| Step                             | Where                                                           | What happens                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Entry**                     | 1:1 Planner or Prep page                                        | Ideally: user selects a meeting and clicks “Generate prep”. Today: **no UI calls these endpoints**; `apiClient.triggerMeetingPrep(teamId, meetingId)` exists but is never invoked.                                                                                                                                                                                                                  |
+| **2. API call**                  | `MeetingDetail.tsx` or `MemberPrep.tsx`                         | **POST** `api/teams/team1/meetings/{meetingId}/prep` via `triggerMeetingPrep`, or **POST** `api/members/{memberId}/prep` via `getMemberPrep`.                                                                                                                                                                                                                                                       |
+| **3. Controller**                | `MeetingsController.TriggerPrep` or `MembersController.GetPrep` | Meetings: loads meeting, gets `memberId` from meeting id; Members: uses route `memberId` + query `teamId`. Both call `orchestrator.PrepareConversationAsync(teamId, memberId, cancellationToken)`.                                                                                                                                                                                                  |
+| **4. Orchestrator**              | `AnalyzerOrchestrator.PrepareConversationAsync`                 | Runs **in parallel:** `wellbeingAnalyzer.AnalyzeTeamAsync(teamId)`, `skillsAnalyzer.AnalyzeTeamAsync(teamId)`, `deliveryAnalyzer.AnalyzeTeamAsync(teamId)`. Awaits all three, then calls `conversationPrepAgent.PrepareAsync(teamId, memberId, wellbeingResult, skillsResult, deliveryResult, cancellationToken)`.                                                                                  |
+| **5a. WellbeingRiskAnalyzer**    | Called by orchestrator                                          | **MCP tool calls:** `wellbeingTools.GetPulseResults(teamId)`, `GetSafetyScores(teamId)`, `GetSentimentTrends(teamId)`, `hrTools.ListAbsences(teamId)`. Builds prompt with that JSON; creates **ChatCompletionAgent**; invokes LLM; parses JSON to `WellbeingAnalysis`. Persists high/critical risk as team signals via `signalRepository.UpsertTeamSignalAsync`. Returns `WellbeingAnalysis`.       |
+| **5b. SkillsGrowthAnalyzer**     | Called by orchestrator                                          | **MCP tool calls:** `learningTools.GetTrainingRecords(teamId)`, `GetIdpGoals(teamId)`, `GetSkillAssessments(teamId)`. Prompt + LLM; parses to `SkillsAnalysis`. Returns it.                                                                                                                                                                                                                         |
+| **5c. DeliveryWorkloadAnalyzer** | Called by orchestrator                                          | **MCP tool calls:** `deliveryTools.GetSprintSummary(teamId)`, `GetPrMetrics(teamId)`, `GetMeetingLoad(teamId)`. Prompt + LLM; parses to `DeliveryAnalysis`. Persists overloaded/critical workload as team signals. Returns it.                                                                                                                                                                      |
+| **6. ConversationPrepAgent**     | Called by orchestrator with the three results                   | **Repos:** `employeeRepository.GetByIdAsync(teamId, memberId)`, `memberRepository` not used for dashboard in this path. **MCP tool calls:** `hrTools.ListMeetings(teamId)`, `hrTools.GetDeferredTopics(teamId)`. Extracts member-specific slices from the three analyses (risk, skills insight, delivery insight). Builds prompt; **ChatCompletionAgent** → LLM; parses JSON to `ConversationPrep`. |
+| **7. Response**                  | Controller                                                      | Returns 200 OK with `ConversationPrep` (suggestedTopics, followUpActions, coachTips, questionsToAsk, contextSummary, etc.).                                                                                                                                                                                                                                                                         |
+| **8. Back to UI**                | MeetingDetail dialog or MemberPrep page                         | MeetingDetail shows the brief in a dialog with "Add topics to agenda". MemberPrep shows the generated brief (context, topics, coach tips, follow-ups, questions) and replaces the default dashboard-based sections until the user generates again.                                                                                                                                                  |
+
+**Data sources:** Orchestrator uses **three analyzers** (each uses MCP tool classes → repos) and **ConversationPrepAgent** (repos + HrDataGatewayTools). No RAG in this pipeline.
+
+---
+
+### 10.4 Summary table: agent entry points and data
+
+| Agent / pipeline         | Web entry                                 | API endpoint                                                          | Data sources                                                                                                                                                                                                                                                            |
+| ------------------------ | ----------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PeoplePartnerCopilot** | Copilot FAB → CopilotPanel (lead)         | POST `api/copilot/chat`                                               | EmployeeRepository, TeamKpiRepository, SignalRepository, RagService                                                                                                                                                                                                     |
+| **DevelopmentCoach**     | Copilot FAB / nav → AICoachPanel (member) | POST `api/coach/chat`                                                 | EmployeeRepository, MemberRepository, RagService                                                                                                                                                                                                                        |
+| **Conversation prep**    | (No UI yet)                               | POST `api/teams/.../meetings/.../prep` or POST `api/members/.../prep` | Orchestrator → WellbeingRiskAnalyzer (WellbeingSignalsTools, HrDataGatewayTools), SkillsGrowthAnalyzer (LearningSkillsTools), DeliveryWorkloadAnalyzer (DeliveryMetricsTools), then ConversationPrepAgent (HrDataGatewayTools, EmployeeRepository); all tools use repos |
+
+---
+
+## Running Locally
+
+### Prerequisites
+
+- .NET 10 SDK
+- Azure Storage Emulator (Azurite) or Azure Storage connection string
+- Azure OpenAI endpoint + key (or set `UseAzureOpenAI=false` for mocked responses)
+
+### Backend
+
+```bash
+cd api/src/Logiq.Api
+dotnet run
+# API at http://localhost:5000
+# Scalar (OpenAPI) at http://localhost:5000/scalar
+# MCP at http://localhost:5000/mcp
+```
+
+The `SeedDataService` seeds 10 employees, signals, meetings, dashboards, and KPIs on first run if storage is empty.
+
+### Frontend
+
+```bash
+cd webapp
+npm install
+npm run dev
+# App at http://localhost:8080
+```
+
+Set `VITE_API_BASE_URL=http://localhost:5000` in `webapp/.env.local`.
+
+## Configuration
+
+All configuration lives in `appsettings.json` — no hardcoded strings:
+
+```json
+{
+  "Azure": {
+    "OpenAI": {
+      "Endpoint": "https://your-resource.openai.azure.com/",
+      "ApiKey": "...",
+      "ChatDeploymentName": "gpt-4o",
+      "EmbeddingDeploymentName": "text-embedding-3-small"
+    },
+    "Search": {
+      "Endpoint": "https://your-search.search.windows.net",
+      "ApiKey": "...",
+      "IndexName": "logiq-knowledge"
+    },
+    "Storage": {
+      "ConnectionString": "UseDevelopmentStorage=true"
+    }
+  }
+}
+```
+
+## Endpoints
+
+### Teams (`api/teams/{teamId}`)
+
+| Method | Endpoint                                       | Description                                          | Controller                      | Webapp usage                                                                                                                              |
+| ------ | ---------------------------------------------- | ---------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `api/teams/{teamId}/employees`                 | List all employees in the team.                      | TeamsController.GetEmployees    | `apiClient.getEmployees` → useEmployees (Index, MyTeam, WellbeingRisks, OneOnOnePlanner, AppShell, SkillsTab, DeliveryTab, MeetingDetail) |
+| GET    | `api/teams/{teamId}/employees/{employeeId}`    | Get a single employee by ID.                         | TeamsController.GetEmployee     | `apiClient.getEmployee` → useEmployee (TeamMemberDetail)                                                                                  |
+| GET    | `api/teams/{teamId}/signals`                   | List team-level signals (wellbeing, delivery, etc.). | TeamsController.GetSignals      | `apiClient.getSignals` → useSignals (Index, WellbeingRisks)                                                                               |
+| GET    | `api/teams/{teamId}/kpis`                      | Get current team KPIs snapshot.                      | TeamsController.GetKpis         | `apiClient.getTeamKPIs` → useTeamKPIs (Index, Landing)                                                                                    |
+| GET    | `api/teams/{teamId}/financials`                | Get team financials (e.g. at-risk count, churn).     | TeamsController.GetFinancials   | `apiClient.getTeamFinancials` → useTeamFinancials (Index)                                                                                 |
+| GET    | `api/teams/{teamId}/skills`                    | Get team skills matrix.                              | TeamsController.GetSkills       | `apiClient.getSkillsMatrix` → useSkillsMatrix (SkillsTab)                                                                                 |
+| GET    | `api/teams/{teamId}/members/{memberId}/detail` | Get member detail (profile, stored analysis blob).   | TeamsController.GetMemberDetail | `apiClient.getMemberDetail` → useMemberDetail (TeamMemberDetail, AIOverviewDialog)                                                        |
+
+### Meetings (`api/teams/{teamId}/meetings`)
+
+| Method | Endpoint                                       | Description                                                               | Controller                           | Webapp usage                                                                                                                                                         |
+| ------ | ---------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `api/teams/{teamId}/meetings`                  | List upcoming 1:1 meetings for the team.                                  | MeetingsController.GetUpcoming       | `apiClient.getMeetings` → useMeetings (OneOnOnePlanner)                                                                                                              |
+| GET    | `api/teams/{teamId}/meetings/past`             | List past 1:1 meetings.                                                   | MeetingsController.GetPast           | `apiClient.getPastMeetings` → usePastMeetings (OneOnOnePlanner)                                                                                                      |
+| GET    | `api/teams/{teamId}/meetings/deferred-topics`  | List deferred topics across meetings.                                     | MeetingsController.GetDeferredTopics | `apiClient.getDeferredTopics` → useDeferredTopics (OneOnOnePlanner)                                                                                                  |
+| POST   | `api/teams/{teamId}/meetings/{meetingId}/prep` | Trigger AI-generated 1:1 brief for a meeting (orchestrator + prep agent). | MeetingsController.TriggerPrep       | `apiClient.triggerMeetingPrep` → **AI Prep** button in MeetingDetail (1:1 Planner); dialog with brief and "Add topics to agenda" (no “Generate prep” in 1:1 Planner) |
+
+### Members
+
+| Method | Endpoint                                   | Description                                                                | Controller                         | Webapp usage                                                                                                                                  |
+| ------ | ------------------------------------------ | -------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `api/members/{memberId}/dashboard?teamId=` | Get member dashboard (KPIs, dev goals, prep topics, etc.).                 | MembersController.GetDashboard     | `apiClient.getMemberDashboard` → useMemberDashboard (MemberDashboardWidgets, MemberPrep, MemberDevPlan, MemberDelivery, AICoachPanel)         |
+| GET    | `api/members/{memberId}/signals?teamId=`   | List signals for a specific member.                                        | MembersController.GetMemberSignals | `apiClient.getMemberSignals` → useMemberSignals (MemberDashboardWidgets, MemberSignals, AICoachPanel)                                         |
+| POST   | `api/members/{memberId}/prep?teamId=`      | Trigger AI-generated 1:1 brief for the member (orchestrator + prep agent). | MembersController.GetPrep          | `apiClient.getMemberPrep` → **Generate prep** button on MemberPrep page; shows AI-generated brief (topics, coach tips, follow-ups, questions) |
+
+### Copilot & Coach
+
+| Method | Endpoint           | Description                                                                  | Controller             | Webapp usage                           |
+| ------ | ------------------ | ---------------------------------------------------------------------------- | ---------------------- | -------------------------------------- |
+| POST   | `api/copilot/chat` | Lead/people partner chat: team context + RAG, returns reply and suggestions. | CopilotController.Chat | `apiClient.copilotChat` (CopilotPanel) |
+| POST   | `api/coach/chat`   | Member chat: individual context + RAG, returns reply and suggestions.        | CoachController.Chat   | `apiClient.coachChat` (AICoachPanel)   |
+
+---
+
+## Search (RAG / Azure AI Search)
+
+Search is used for **RAG (retrieval-augmented generation)** only. Copilot and Coach call it to fetch relevant HR/people knowledge snippets; those snippets are added to the LLM prompt so answers are grounded in documentation (e.g. 1:1 best practices, psychological safety, feedback).
+
+- **Backend:** Azure AI Search (one index).
+- **Service:** `IRagService.RetrieveContextAsync(query, maxResults)` — used by PeoplePartnerCopilot and DevelopmentCoach. Conversation prep does **not** use Search.
+
+---
+
+### Index
+
+| Field           | Type    | Purpose                       |
+| --------------- | ------- | ----------------------------- |
+| `id`            | string  | Document id                   |
+| `title`         | string  | Document title                |
+| `content`       | string  | Full text (keyword search)    |
+| `contentVector` | float[] | Embedding for semantic search |
+
+Index name is from config (e.g. `logiq-knowledge`). Created and seeded at startup by `SearchIndexProvisioningService` if Azure Search is configured.
+
+---
+
+### Indexing (startup)
+
+1. Index is created with the fields above; vector profile uses the dimensions from config.
+2. Seed HR documents (e.g. 1:1 best practices, churn mitigation, psychological safety, IDP, burnout, career conversations, feedback) are uploaded.
+3. Each document's `title` + `content` is sent to **Azure OpenAI** (embedding deployment, e.g. `text-embedding-3-small`) via `IEmbeddingService`.
+4. The returned vector is stored in `contentVector`. If embedding is not configured, documents are still stored for keyword-only search.
+
+---
+
+### Retrieval (when Copilot or Coach gets RAG context)
+
+1. **Embed query:** `IEmbeddingService.GetEmbeddingAsync(query)` (same Azure OpenAI embedding model).
+2. **Search:** If embedding is available → **vector search** on `contentVector` (semantic similarity). If not, or no vector hits → **keyword search** on `content` (fallback).
+3. **Return:** Top `maxResults` snippets (e.g. 5) as a single context string for the LLM prompt.
+
+---
+
+### Configuration
+
+| Config key (under `Azure:Search`) | Meaning                   |
+| --------------------------------- | ------------------------- |
+| `Endpoint`, `ApiKey`              | Azure AI Search client    |
+| `IndexName`                       | Index name                |
+| `VectorFieldName`                 | e.g. `contentVector`      |
+| `VectorSearchDimensions`          | Must match embedding size |
+
+Embedding model: `Azure:OpenAI:EmbeddingDeploymentName`. If Search or embedding is missing, provisioning or retrieval is skipped (no RAG).
