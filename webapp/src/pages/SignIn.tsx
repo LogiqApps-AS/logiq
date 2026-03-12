@@ -133,7 +133,7 @@ const SignIn = () => {
 
             <div className={styles.row}>
               <Checkbox label="Remember me" />
-              <button onClick={(e) => { e.preventDefault(); /* TODO: implement forgot password */ }} className={styles.link} style={{ background: "none", border: "none", cursor: "pointer" }}>Forgot password?</button>
+              <button onClick={(e) => { e.preventDefault(); }} className={styles.link} style={{ background: "none", border: "none", cursor: "pointer" }}>Forgot password?</button>
             </div>
 
             <Button appearance="primary" type="submit" style={{ width: "100%" }} size="large">
@@ -187,7 +187,6 @@ const SignIn = () => {
             onClick={() => navigate("/demo")}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/demo"); } }}
           >
-            {/* Decorative circles */}
             <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.08)" }} />
             <div style={{ position: "absolute", bottom: "-15px", left: "-15px", width: "60px", height: "60px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.06)" }} />
             

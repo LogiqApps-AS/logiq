@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -105,7 +101,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Prevent Tailwind border reset from breaking Fluent UI */
 .fui-FluentProvider *,
 .fui-FluentProvider *::before,
 .fui-FluentProvider *::after {
@@ -114,7 +109,6 @@ All colors MUST be HSL.
   border-color: revert;
 }
 
-/* Scroll reveal utilities */
 .reveal {
   opacity: 0;
   transform: translateY(16px);
@@ -171,12 +165,10 @@ All colors MUST be HSL.
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Page content entrance animation */
 .page-animate > * {
   animation: page-fade-in 0.4s ease-out both;
 }
 
-/* Staggered children animation for cards/sections */
 .stagger-children > * {
   opacity: 0;
   animation: stagger-fade-in 0.35s ease-out forwards;
@@ -193,7 +185,6 @@ All colors MUST be HSL.
 .stagger-children > *:nth-child(10) { animation-delay: 0.40s; }
 .stagger-children > *:nth-child(n+11) { animation-delay: 0.44s; }
 
-/* Hover lift for cards */
 .fui-Card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

@@ -4,10 +4,6 @@ import {
   type BrandVariants,
 } from "@fluentui/react-components";
 
-/**
- * Brand ramp based on #5b5fc7 (Microsoft Teams / Copilot purple).
- * All `appearance="primary"` Fluent UI components inherit from this.
- */
 const logiqBrand: BrandVariants = {
   10: "#060616",
   20: "#14143b",

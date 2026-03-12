@@ -1,12 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useCallback } from "react";
 
-/**
- * Keeps tab state in the URL search params so pages can be opened
- * directly via URL with the correct tab selected.
- *
- * Example: /team?tab=skills  →  activeTab = "skills"
- */
 export function useTabParam(defaultTab: string, paramName = "tab") {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get(paramName) || defaultTab;

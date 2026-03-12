@@ -244,12 +244,10 @@ const TeamMemberDetail = () => {
 
   return (
     <PageContainer>
-        {/* Back link */}
         <button className={styles.backLink} onClick={() => navigate("/dashboard/team")}>
           <ArrowLeft20Regular /> Back to Team
         </button>
 
-        {/* Profile header */}
         <div className={styles.profileCard}>
           <Persona
             name={emp.name}
@@ -274,7 +272,6 @@ const TeamMemberDetail = () => {
           </Button>
         </div>
 
-        {/* KPI Scores */}
         <div className={styles.kpiGrid}>
           {scores.map((score, i) => (
             <div key={kpiLabels[i]} className={styles.kpiCard}>
@@ -293,7 +290,6 @@ const TeamMemberDetail = () => {
           ))}
         </div>
 
-        {/* Stat cards */}
         <div className={styles.statGrid}>
           <div className={styles.statCard}>
             <Warning16Filled style={{ color: "#d13438" }} />
@@ -325,7 +321,6 @@ const TeamMemberDetail = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <TabList
           selectedValue={activeTab}
           onTabSelect={(_, d) => setActiveTab(d.value as string)}
@@ -339,7 +334,6 @@ const TeamMemberDetail = () => {
         </TabList>
 
         <div className={styles.tabContent}>
-          {/* PROJECTS TAB */}
           {activeTab === "projects" && (
             detail.projects.length > 0 ? detail.projects.map((p) => (
             <div key={p.id} className={styles.sectionCard}>
@@ -367,7 +361,6 @@ const TeamMemberDetail = () => {
             )) : <EmptyState icon={<Building20Regular />} title="No projects yet" description="This team member has not been assigned to any projects." />
           )}
 
-          {/* FEEDBACK TAB */}
           {activeTab === "feedback" && (
             detail.feedback.length > 0 ? detail.feedback.map((f) => (
             <div key={f.id} className={styles.feedbackCard}>
@@ -413,7 +406,6 @@ const TeamMemberDetail = () => {
             )) : <EmptyState icon={<Star20Regular />} title="No feedback received" description="No peer or manager feedback has been submitted for this team member yet." />
           )}
 
-          {/* TRAINING TAB */}
           {activeTab === "training" && (
             <>
               <div className={styles.threeColGrid}>
@@ -476,7 +468,6 @@ const TeamMemberDetail = () => {
             </>
           )}
 
-          {/* SIGNALS TAB */}
           {activeTab === "signals" && (
             detail.signals.length > 0 ? detail.signals.map((s) => (
             <div
@@ -497,7 +488,6 @@ const TeamMemberDetail = () => {
             )) : <EmptyState icon={<Warning20Regular />} title="No active signals" description="There are no alerts or signals for this team member right now." />
           )}
 
-          {/* CAREER TAB */}
           {activeTab === "career" && (
             <>
               <div className={styles.sectionCard}>

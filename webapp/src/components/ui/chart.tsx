@@ -1,7 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-// Lazy load recharts components for code splitting (imported dynamically at runtime)
 const LazyResponsiveContainer = React.lazy(() =>
   import("recharts").then((module) => ({ default: module.ResponsiveContainer }))
 );
@@ -10,10 +9,8 @@ const LazyTooltip = React.lazy(() => import("recharts").then((module) => ({ defa
 
 const LazyLegend = React.lazy(() => import("recharts").then((module) => ({ default: module.Legend })));
 
-// Import types only for TypeScript (these are stripped at build time, zero runtime cost)
 import type * as RechartsTypes from "recharts";
 
-// Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
 
 export type ChartConfig = {
@@ -286,7 +283,6 @@ const ChartLegendContent = React.forwardRef<
 });
 ChartLegendContent.displayName = "ChartLegend";
 
-// Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
   if (typeof payload !== "object" || payload === null) {
     return undefined;

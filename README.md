@@ -18,6 +18,8 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
 - **AI Coach (member):** Chat over individual context and RAG for career and 1:1 prep. Uses employee profile and member dashboard plus retrieved knowledge.
 - **Conversation prep pipeline:** Orchestrator runs three analyzers in parallel (wellbeing, skills, delivery), then a conversation prep agent that consumes their outputs and produces a 1:1 brief (suggested topics, follow-ups, coach tips). Prep is triggered from the 1:1 Planner (AI Prep button on meeting detail) and from the 1:1 Prep page (Generate prep button).
 
+---
+
 ## Technology Stack
 
 | Component           | Technology                                       |
@@ -35,43 +37,46 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
 | DevOps              | GitHub Actions, Docker, Azure Container Registry |
 | Deployment          | Azure Container App (CORS, Custom Domain)        |
 
-## Architecture Overview (C4)
+---
 
-### C4 Level 1 — System Context
+## Architecture Overview
+
+### Level 1 — System Context (HLA)
 
 **Actors**, the **LogIQ system**, and **external systems**.
 
 ```
      ┌─────────────────┐              ┌─────────────────┐
      │   Team Lead     │              │  Team Member    │
+     │   ---------     │              │  -----------    │
      │ (People Partner)│              │ (IC / Employee) │
      └────────┬────────┘              └────────┬────────┘
               │                                │
               └──────────────┬─────────────────┘
                              ▼
-              ┌──────────────────────────────────────────┐
+              ┌───────────────────────────────────────────┐
               │              LogIQ                        │
-              │  AI-powered people & team intelligence   │
-              │  Dashboard, 1:1 planner, prep, copilot, │
-              │  coach, wellbeing/skills/delivery       │
-              └──────────────┬───────────────────────────┘
+              │              -----                        │
+              │  Dashboard, 1:1 Planner, AI Prep, Copilot │
+              │  AI Coach, Wellbeing/Skills/Delivery      │
+              └──────────────┬────────────────────────────┘
          ┌───────────────────┼───────────────────┐
          ▼                   ▼                   ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Azure OpenAI    │ │ Azure AI Search  │ │ Azure Table      │
-│ (chat + embed)  │ │ (RAG: vector +   │ │ Storage          │
-│                 │ │  keyword)        │ │ (6 tables)       │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
+┌─────────────────┐ ┌──────────────────┐ ┌─────────────────┐
+│ Azure OpenAI    │ │ Azure AI Search  │ │ Azure Table     │
+│ ------------    │ │ ---------------  │ │ -----------     │
+│ chat + embed    │ │ vector + keyword │ │ Storage         │
+└─────────────────┘ └──────────────────┘ └─────────────────┘
          ▲
          │
-┌─────────────────┐
-│ External MCP    │
-│ Client (POST    │
-│ /mcp)           │
-└─────────────────┘
+┌──────────────────────┐
+│ External MCP         │
+│ ------------         │
+│ Client (POST /mcp)   │
+└──────────────────────┘
 ```
 
-### C4 Level 2 — Container Diagram (Backend in Detail)
+### Level 2 — Container Diagram (Backend)
 
 Containers **inside** LogIQ and how the backend is structured.
 
@@ -81,43 +86,43 @@ Containers **inside** LogIQ and how the backend is structured.
      └────────┬────────┘              └────────┬────────┘
               └──────────────┬─────────────────┘
                              ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              LogIQ System                                    │
+┌────────────────────────────────────────────────────────────────────────────┐
+│                              LogIQ System                                  │
 │  ┌─────────────────────────────────────┐  ┌─────────────────────────────┐  │
-│  │  Web Application                     │  │  Backend API                  │  │
+│  │  Web Application                    │  │  Backend API                │  │
 │  │  (React, Fluent UI, Vite)           │  │  (ASP.NET Core 10)          │  │
-│  │  Dashboard, My Team, Wellbeing,      │──│  REST: teams, members,       │  │
-│  │  1:1 Planner, Member Detail,       │  │  meetings, prep, copilot,    │  │
-│  │  Skills, Delivery, Prep, Dev Plan,  │  │  coach; MCP server at /mcp   │  │
-│  │  Signals, Copilot, AI Coach         │  │                              │  │
+│  │  Dashboard, My Team, Wellbeing,     │──│  REST: teams, members,      │  │
+│  │  1:1 Planner, Member Detail,        │  │  meetings, prep, copilot,   │  │
+│  │  Skills, Delivery, Prep, Dev Plan,  │  │  coach; MCP server at /mcp  │  │
+│  │  Signals, Copilot, AI Coach         │  │                             │  │
 │  └─────────────────────────────────────┘  └──────────────┬──────────────┘  │
-│           HTTP (REST API)                                 │                  │
-└───────────────────────────────────────────────────────────│──────────────────┘
-                                                            │
-                    Backend API — internal containers        │
+│           HTTP (REST API)                                │                 │
+└──────────────────────────────────────────────────────────│─────────────────┘
+                                                           │
+                    Backend API — internal containers      │
                     ─────────────────────────────────────────
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
-┌───────────────┐   ┌─────────────────────┐   ┌─────────────────────┐
+┌───────────────┐   ┌──────────────────────┐   ┌─────────────────────┐
 │ REST API      │   │ Analyzer Orchestrator│   │ Copilot & Coach     │
 │ (Controllers) │   │ (Semantic Kernel)    │   │ (PeoplePartner +    │
 │ Teams,        │   │ WellbeingRisk,       │   │  DevelopmentCoach)  │
 │ Members,      │   │ SkillsGrowth,        │   │ RAG + repos,        │
 │ Meetings,     │   │ DeliveryWorkload,    │   │ Azure OpenAI chat   │
 │ Prep, Chat    │   │ ConversationPrep     │   └──────────┬──────────┘
-└───────┬───────┘   └──────────┬──────────┘              │
-        │                      │                         │
-        │                      ▼                         │
-        │              ┌─────────────────────┐           │
-        │              │ MCP Tool Server     │           │
-        │              │ (in-process; /mcp)  │           │
-        │              │ WellbeingSignals,   │           │
-        │              │ HrDataGateway,     │           │
-        │              │ LearningSkills,    │           │
-        │              │ DeliveryMetrics     │           │
-        │              └──────────┬──────────┘           │
-        │                         │                      │
-        └─────────────────────────┼──────────────────────┘
+└───────┬───────┘   └──────────┬───────────┘              │
+        │                      │                          │
+        │                      ▼                          │
+        │              ┌─────────────────────┐            │
+        │              │ MCP Tool Server     │            │
+        │              │ (in-process; /mcp)  │            │
+        │              │ WellbeingSignals,   │            │
+        │              │ HrDataGateway,      │            │
+        │              │ LearningSkills,     │            │
+        │              │ DeliveryMetrics     │            │
+        │              └──────────┬──────────┘            │
+        │                         │                       │
+        └─────────────────────────┼───────────────────────┘
                                   ▼
                        ┌─────────────────────┐
                        │ Repositories        │
@@ -131,24 +136,17 @@ Containers **inside** LogIQ and how the backend is structured.
          ▼                        ▼                        ▼
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
 │ Azure Table     │      │ Azure AI Search │      │ Azure OpenAI    │
-│ Storage         │      │ (RAG, vector)   │      │ (chat + embed)   │
+│ Storage         │      │ (RAG, vector)   │      │ (chat + embed)  │
 └─────────────────┘      └─────────────────┘      └─────────────────┘
 ```
-
-- **Web Application** talks only to the REST API. **Controllers** use repositories for CRUD and invoke agents for chat and prep. **Agents** use MCP tool classes (same code as at `/mcp`) and/or repositories + RAG.
-- Details: [api/SYSTEM_ARCHITECTURE.md](api/SYSTEM_ARCHITECTURE.md), [api/README.md](api/README.md).
 
 > All data comes from the backend. Repositories read from Azure Table Storage; agents use the same MCP tool implementations exposed at `/mcp` for external clients.
 
 ---
 
-## Flow sequence diagrams (Mermaid)
+## Flow Sequence Diagrams
 
-Mermaid **sequence diagrams** for the main flows: Copilot/Coach (chat), and Conversation prep.
-
-### Copilot (lead) & Coach (member) — chat with RAG
-
-One flow: **lead** uses team context (PeoplePartnerCopilot); **member** uses individual context (DevelopmentCoach). Both use repos + RAG + Azure OpenAI.
+### Copilot (lead) & Coach (member) Chat with RAG
 
 ```mermaid
 sequenceDiagram
@@ -188,7 +186,7 @@ sequenceDiagram
   W-->>U: Show reply and suggestion chips
 ```
 
-### Conversation prep — orchestrated analyzers + MCP
+### Conversation Prep (Orchestrated Analyzers + MCP)
 
 ```mermaid
 sequenceDiagram
@@ -398,119 +396,6 @@ End-to-end tables for each agent and the prep pipeline are in SYSTEM_ARCHITECTUR
 
 ---
 
-## Technology stack
-
-| Layer           | Technology                                                          |
-| --------------- | ------------------------------------------------------------------- |
-| Frontend        | React 18, Vite, Fluent UI v9, TanStack Query                        |
-| Backend         | ASP.NET Core 10, .NET 10                                            |
-| Agent framework | Microsoft Semantic Kernel                                           |
-| MCP             | ModelContextProtocol.AspNetCore (MCP server at /mcp)                |
-| LLM             | Azure OpenAI (chat + embedding deployments)                         |
-| RAG             | Azure AI Search (vector + keyword), IEmbeddingService + IRagService |
-| Storage         | Azure Table Storage (Azure.Data.Tables)                             |
-| API docs        | Scalar (OpenAPI)                                                    |
-| Containers      | Docker (API + webapp); multistage builds, non-root, health checks   |
-
----
-
-## CI/CD: GitHub Actions and Azure Container Registry
-
-**Pipeline:** GitHub Actions builds and pushes Docker images to **Azure Container Registry (ACR)**. Images are suitable for deployment to **Azure Container Instances (ACI)**, Azure Container Apps, or other orchestrators.
-
-**Workflow:** `.github/workflows/docker-build-push.yml`
-
-- **Triggers:** Push to `main`, pull requests to `main`, and tags `v*.*.*`.
-- **Jobs:** Two parallel jobs: build-and-push-api, build-and-push-webapp.
-- **Steps:** Checkout, Docker Buildx, login to ACR (`secrets.REGISTRY`, `ACR_USERNAME`, `ACR_PASSWORD`), metadata (tags/labels), build-push. Push is skipped on pull requests (build-only for validation).
-- **Images:** `logiq-api`, `logiq-webapp` (contexts `./api`, `./webapp`; Dockerfiles in those directories). Multi-platform: `linux/amd64`, `linux/arm64`. Caching: GitHub Actions cache.
-- **Tags:** From docker/metadata-action: branch, pr, semver (e.g. 1.0.0, 1.0, 1), sha, and `latest` on default branch.
-
-**Secrets (repository or environment):** `REGISTRY` (ACR login server, e.g. `logiqacr.azurecr.io`), `ACR_USERNAME`, `ACR_PASSWORD` (e.g. from an Azure service principal with AcrPush).
-
-**Deploying from ACR:** After images are in ACR, deploy to Azure Container Instances (or Container Apps) by referencing the image (e.g. `logiqacr.azurecr.io/logiq-api:latest`). Use Azure CLI, portal, or a separate CD workflow to create/update ACI/ACA from the registry. Setup instructions for ACR and secrets are in [.github/SETUP.md](.github/SETUP.md) and [.github/workflows/README.md](.github/workflows/README.md).
-
----
-
-## Configuration
-
-Backend configuration is in `api/src/Logiq.Api/appsettings.json` (and environment or User Secrets). Key sections:
-
-- **Azure:OpenAI** – Endpoint, ApiKey, ChatDeploymentName, EmbeddingDeploymentName.
-- **Azure:Search** – Endpoint, ApiKey, IndexName, VectorFieldName, VectorSearchDimensions (RAG index and vector field).
-- **Azure:Storage** – ConnectionString, table names (EmployeesTable, SignalsTable, MeetingsTable, DeferredTopicsTable, TeamKpiSnapshotsTable, AnalysisResultsTable).
-- **Mcp** – BaseUrl (e.g. for MCP server URL).
-- **Cors:AllowedOrigins** – e.g. `http://localhost:8080` for the webapp.
-
-For RAG document ingest, Azure:Search Endpoint and ApiKey must be set; otherwise provisioning skips and the index stays empty. See api/README.md for a full example and local run instructions.
-
----
-
-## Running locally
-
-**Prerequisites:** .NET 10 SDK, Node.js (for webapp), Azure Storage (Azurite or real connection string), optional Azure OpenAI and Azure AI Search for full AI and RAG.
-
-**Backend:**
-
-```bash
-cd api/src/Logiq.Api
-dotnet run
-```
-
-API: http://localhost:5000. Scalar (OpenAPI): http://localhost:5000/scalar. MCP: http://localhost:5000/mcp. Seed data and RAG index are provisioned on first run when configured.
-
-**Frontend:**
-
-```bash
-cd webapp
-npm install
-npm run dev
-```
-
-App: http://localhost:8080. Set `VITE_API_BASE_URL=http://localhost:5000` (e.g. in `.env.local`) to point to the API.
-
-**Docker:** See [docker/README.md](docker/README.md) for Docker Compose (API, webapp, Azurite), env vars, and production notes.
-
----
-
-## Project structure
-
-```
-logiq/
-├── api/                          # Backend
-│   ├── src/Logiq.Api/            # ASP.NET Core app
-│   │   ├── Agents/               # Orchestrator, analyzers, prep, copilot, coach
-│   │   ├── Configuration/        # Options (Azure, Storage, Mcp)
-│   │   ├── Controllers/          # Teams, Members, Meetings, Copilot, Coach, Search
-│   │   ├── Mcp/                  # MCP tool classes
-│   │   ├── Services/              # RAG, embedding, search provisioning, seed
-│   │   ├── Storage/              # Repositories
-│   │   └── Program.cs
-│   ├── Dockerfile
-│   ├── README.md                 # Backend and agent overview
-│   └── SYSTEM_ARCHITECTURE.md    # Endpoints, entities, agents, MCP, flows, storage
-├── webapp/                       # React frontend (Vite, Fluent UI v9)
-├── docker/                       # Compose, .env.example
-├── .github/
-│   ├── workflows/                # docker-build-push.yml (ACR)
-│   ├── SETUP.md                  # ACR and secrets setup
-│   └── workflows/README.md       # Workflow and tagging details
-└── README.md                     # This file
-```
-
----
-
-## Resources
-
-- [AI Dev Days Hackathon](https://aka.ms/aidevdayshackathon)
-- [Microsoft Agent Framework](https://aka.ms/agent-framework)
-- [Azure MCP](https://aka.ms/azure-mcp)
-- [Azure AI Search](https://learn.microsoft.com/azure/search/)
-- [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/)
-- [Semantic Kernel](https://learn.microsoft.com/semantic-kernel/)
-
----
-
 ## 5. Entities (Domain Models)
 
 | Entity               | Description                                                                                                                                 | Main storage / source                            |
@@ -681,60 +566,6 @@ This flow is triggered only from the **API** (no webapp button currently). Two e
 
 ---
 
-## Running Locally
-
-### Prerequisites
-
-- .NET 10 SDK
-- Azure Storage Emulator (Azurite) or Azure Storage connection string
-- Azure OpenAI endpoint + key (or set `UseAzureOpenAI=false` for mocked responses)
-
-### Backend
-
-```bash
-cd api/src/Logiq.Api
-dotnet run
-# API at http://localhost:5000
-# Scalar (OpenAPI) at http://localhost:5000/scalar
-# MCP at http://localhost:5000/mcp
-```
-
-The `SeedDataService` seeds 10 employees, signals, meetings, dashboards, and KPIs on first run if storage is empty.
-
-### Frontend
-
-```bash
-cd webapp
-npm install
-npm run dev
-# App at http://localhost:8080
-```
-
-Set `VITE_API_BASE_URL=http://localhost:5000` in `webapp/.env.local`.
-
-## Configuration
-
-All configuration lives in `appsettings.json` — no hardcoded strings:
-
-```json
-{
-  "Azure": {
-    "OpenAI": {
-      "Endpoint": "https://your-resource.openai.azure.com/",
-      "ApiKey": "...",
-      "ChatDeploymentName": "gpt-4o",
-      "EmbeddingDeploymentName": "text-embedding-3-small"
-    },
-    "Search": {
-      "Endpoint": "https://your-search.search.windows.net",
-      "ApiKey": "...",
-      "IndexName": "logiq-knowledge"
-    },
-    "Storage": {
-      "ConnectionString": "UseDevelopmentStorage=true"
-    }
-  }
-}
 ```
 
 ## Endpoints
@@ -816,13 +647,139 @@ Index name is from config (e.g. `logiq-knowledge`). Created and seeded at startu
 
 ---
 
+## Project Structure
+
+```
+
+logiq/
+├── api/
+│ ├── src/Logiq.Api/ # Backend, ASP.NET Core 10 App
+│ │ ├── Agents/ # Orchestrator, Analyzers, AI Prep, Copilot, AI Coach
+│ │ ├── Configuration/ # Options (Azure OpenAI, Azure AI Search, Azure Storage)
+│ │ ├── Controllers/ # Teams, Members, Meetings, Copilot, Coach, Search
+│ │ ├── Mcp/ # MCP tools
+│ │ ├── Rag/ # RAG, Embedding, Ingester, Retriever
+│ │ ├── Storage/ # Data Access, Repositories
+│ │ ├── DataSeeder.cs # Storage, Azure AI Search Seeders
+│ │ └── Program.cs
+│ ├── Dockerfile
+├── webapp/ # Frontend, React, Vite, Fluent UI
+│ ├── Dockerfile
+├── .github/
+│ └── workflows/ # docker-build-push.yml (ACR)
+└── README.md
+
+````
+
+---
+
+## Running Locally
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Node.js](https://nodejs.org/)
+- [Azure Storage](https://learn.microsoft.com/en-us/azure/storage/) / [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite)
+- [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
+- [Azure AI Search](https://azure.microsoft.com/en-us/products/ai-services/ai-search)
+
+### Backend
+
+```bash
+cd api/src/Logiq.Api
+dotnet run
+````
+
+| Service          | URL                          |
+| ---------------- | ---------------------------- |
+| API              | http://localhost:5000        |
+| Scalar (OpenAPI) | http://localhost:5000/scalar |
+| MCP              | http://localhost:5000/mcp    |
+
+#### Configuration
+
+All configuration lives in `appsettings.json` — no hardcoded strings:
+
+```json
+{
+  "Azure": {
+    "OpenAI": {
+      "Endpoint": "https://.openai.azure.com/",
+      "ApiKey": "",
+      "ChatDeploymentName": "gpt-4o",
+      "EmbeddingDeploymentName": "text-embedding-3-small"
+    },
+    "Search": {
+      "Endpoint": "https://.search.windows.net",
+      "ApiKey": "",
+      "IndexName": "logiq-knowledge",
+      "VectorFieldName": "contentVector"
+    },
+    "Storage": {
+      "ConnectionString": "UseDevelopmentStorage=true"
+    },
+    "Cors": {
+      "AllowedOrigins": [ "http://localhost:8080" ]
+    }
+  }
+}`
+```
+
+- **Azure:OpenAI** – Endpoint, ApiKey, ChatDeploymentName, EmbeddingDeploymentName.
+- **Azure:Search** – Endpoint, ApiKey, IndexName, VectorFieldName, VectorSearchDimensions (RAG index and vector field).
+- **Azure:Storage** – ConnectionString, table names (EmployeesTable, SignalsTable, MeetingsTable, DeferredTopicsTable, TeamKpiSnapshotsTable, AnalysisResultsTable).
+- **Cors:AllowedOrigins** – e.g. `http://localhost:8080` for the webapp.
+
+### Frontend
+
+```bash
+cd webapp
+npm install
+npm run dev
+```
+
+| Service | URL                   |
+| ------- | --------------------- |
+| Web     | http://localhost:8080 |
+
 ### Configuration
 
-| Config key (under `Azure:Search`) | Meaning                   |
-| --------------------------------- | ------------------------- |
-| `Endpoint`, `ApiKey`              | Azure AI Search client    |
-| `IndexName`                       | Index name                |
-| `VectorFieldName`                 | e.g. `contentVector`      |
-| `VectorSearchDimensions`          | Must match embedding size |
+Set `VITE_API_BASE_URL=http://localhost:5000` (e.g. in `.env.local`) to point to the API.
 
-Embedding model: `Azure:OpenAI:EmbeddingDeploymentName`. If Search or embedding is missing, provisioning or retrieval is skipped (no RAG).
+---
+
+## CI/CD
+
+GitHub Actions builds and pushes Docker images to **Azure Container Registry (ACR)**. Images are suitable for deployment to **Azure Container Instances (ACI)**, Azure Container Apps, or other orchestrators.
+
+### Workflow
+
+GitHub Actions workflow file path: `.github/workflows/docker-build-push.yml`.
+
+### Triggers
+
+Push to `main`, pull requests to `main`, and tags `v*.*.*`.
+
+### Jobs
+
+Two parallel jobs: `build-and-push-api`, `build-and-push-webapp`.
+
+### Steps
+
+Checkout, Docker Buildx, login to ACR (`secrets.REGISTRY`, `ACR_USERNAME`, `ACR_PASSWORD`), metadata (tags/labels), build-push. Push is skipped on pull requests (build-only for validation).
+
+### Images
+
+`logiq-api`, `logiq-webapp` (contexts `./api`, `./webapp`; Dockerfiles in those directories). Multi-platform: `linux/amd64`, `linux/arm64`. Caching: GitHub Actions cache.
+
+### Tags
+
+From `docker/metadata-action`: branch, pr, semver (e.g. 1.0.0, 1.0, 1), sha, and `latest` on default branch.
+
+### Secrets
+
+`REGISTRY` (ACR login server, e.g. `*.azurecr.io`), `ACR_USERNAME`, `ACR_PASSWORD`.
+
+### Deploying from ACR
+
+After images are in ACR, deploy to Azure Container Apps by referencing the images (e.g. `*.azurecr.io/logiq-api:latest`).

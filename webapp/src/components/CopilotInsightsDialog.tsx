@@ -114,7 +114,7 @@ const useStyles = makeStyles({
       backgroundColor: "#e0edff",
     },
   },
-  // Skeleton styles
+
   shimmerLine: {
     height: "12px",
     borderRadius: "6px",
@@ -281,12 +281,10 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
         <Text size={300} className={styles.loadingStatus}>{LOADING_STEPS[loadingState.step]}</Text>
       </div>
 
-      {/* Summary skeleton */}
       <div className={styles.shimmerLine} style={{ width: "100%" }} />
       <div className={styles.shimmerLine} style={{ width: "85%" }} />
       <div className={styles.shimmerLine} style={{ width: "70%", marginBottom: "24px" }} />
 
-      {/* Key Findings skeleton */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
         <div className={styles.shimmerPill} style={{ width: "20px", height: "20px", borderRadius: "4px" }} />
         <div className={styles.shimmerLine} style={{ width: "110px", marginBottom: 0 }} />
@@ -296,7 +294,6 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
 
       <Divider style={{ margin: "0 0 20px" }} />
 
-      {/* People at Risk skeleton */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
         <div className={styles.shimmerPill} style={{ width: "20px", height: "20px", borderRadius: "4px" }} />
         <div className={styles.shimmerLine} style={{ width: "120px", marginBottom: 0 }} />
@@ -315,7 +312,6 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
 
       <Divider style={{ margin: "8px 0 20px" }} />
 
-      {/* Actions skeleton */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
         <div className={styles.shimmerPill} style={{ width: "20px", height: "20px", borderRadius: "4px" }} />
         <div className={styles.shimmerLine} style={{ width: "160px", marginBottom: 0 }} />
@@ -342,7 +338,6 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
     >
       {loadingState.isLoading ? renderSkeleton() : (
       <div className={styles.contentFadeIn}>
-      {/* Summary narrative */}
       <Text size={300} style={{ color: tokens.colorNeutralForeground2, lineHeight: "1.7", display: "block" }}>
         Based on the latest signals, your team shows elevated risk patterns.
         Combined churn exposure is{" "}
@@ -352,7 +347,6 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
         {" "}Here's a detailed breakdown and recommended actions.
       </Text>
 
-      {/* Key Insights */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <ArrowTrendingDown20Regular style={{ color: "#d13438" }} />
@@ -380,7 +374,6 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
 
       <Divider style={{ margin: "16px 0" }} />
 
-      {/* At-Risk People */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <Warning16Filled style={{ color: "#d13438" }} />
@@ -439,7 +432,6 @@ export const CopilotInsightsDialog: React.FC<CopilotInsightsDialogProps> = ({
 
       <Divider style={{ margin: "16px 0" }} />
 
-      {/* Recommended Actions */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <ClipboardTask20Regular style={{ color: "#0f6cbd" }} />

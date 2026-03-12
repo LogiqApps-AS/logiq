@@ -389,7 +389,6 @@ const Landing = () => {
 
   return (
     <div className={styles.root}>
-      {/* NAV */}
       <div className={styles.nav}>
         <div className={styles.navBrand}>
           <Logo size={36} iconSize={20} />
@@ -435,7 +434,6 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* HERO */}
       <div className={styles.hero}>
         <div className={styles.heroBadge} style={{ animation: "fade-in 0.6s ease-out forwards" }}>
           <div className={styles.heroBadgeDot} />
@@ -470,7 +468,6 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* WHY SECTION */}
       <RevealSection id="features" className={styles.section}>
         <h2 className={styles.sectionTitle}>Why Traditional HRBP is Too Reactive</h2>
         <p className={styles.sectionSubtitle}>
@@ -508,7 +505,6 @@ const Landing = () => {
         </div>
       </RevealSection>
 
-      {/* 6-AGENT ARCHITECTURE */}
       <div id="architecture" style={{ backgroundColor: "#f5f5f5", padding: "80px 32px" }}>
         <RevealSection style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <h2 className={styles.sectionTitle}>6-Agent Architecture</h2>
@@ -542,7 +538,6 @@ const Landing = () => {
         </RevealSection>
       </div>
 
-      {/* 5 KPI DIMENSIONS */}
       <RevealSection id="kpis" className={styles.section}>
         <h2 className={styles.sectionTitle}>5 Intelligence Dimensions</h2>
         <p className={styles.sectionSubtitle}>
@@ -562,7 +557,6 @@ const Landing = () => {
         </div>
       </RevealSection>
 
-      {/* SIGNALS */}
       <RevealSection className={styles.section}>
         <h2 className={styles.sectionTitle}>Signals Before Dashboards</h2>
         <p className={styles.sectionSubtitle}>
@@ -590,7 +584,6 @@ const Landing = () => {
         </div>
       </RevealSection>
 
-      {/* TWO ROLES */}
       <div id="roles" style={{ backgroundColor: "#f5f5f5", padding: "80px 32px" }}>
         <RevealSection style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <h2 className={styles.sectionTitle}>Two Experiences, One Platform</h2>
@@ -642,7 +635,6 @@ const Landing = () => {
         </RevealSection>
       </div>
 
-      {/* CTA */}
       <RevealSection className={styles.ctaSection}>
         <h2 className={styles.sectionTitle}>Ready to See LogIQ in Action?</h2>
         <p style={{ fontSize: "16px", color: "#616161", marginBottom: "28px" }}>
@@ -664,7 +656,6 @@ const Landing = () => {
         </div>
       </RevealSection>
 
-      {/* FOOTER */}
       <div className={styles.footer}>
         <Text size={200} style={{ color: "#999" }}>
           © 2026 LogIQ · Intelligence for Teams · Built on Microsoft 365

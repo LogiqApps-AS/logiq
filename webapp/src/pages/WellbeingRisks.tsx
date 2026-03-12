@@ -129,7 +129,6 @@ const WellbeingRisks = () => {
     <PageContainer>
         <PageHeader title="Wellbeing & Risks" subtitle="Monitor team signals and churn exposure" />
 
-        {/* Copilot Summary */}
         {isLoading ? (
           <div style={{ marginBottom: "20px" }}>
             <Card style={{ padding: "20px 24px" }}>

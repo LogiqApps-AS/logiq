@@ -67,15 +67,12 @@ interface LogiqDialogProps {
   onClose: () => void;
   title: string;
   badge?: string;
-  /** Override the max-width of the dialog surface */
   maxWidth?: string;
-  /** Primary action button in the footer */
   primaryAction?: {
     label: string;
     icon?: ReactNode;
     onClick: () => void;
   };
-  /** Label for the close/cancel button. Defaults to "Close" */
   closeLabel?: string;
   children: ReactNode;
 }

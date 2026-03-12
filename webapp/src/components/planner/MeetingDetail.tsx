@@ -222,7 +222,6 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <Avatar name={meeting.name} size={40} color="colorful" style={{ backgroundColor: meeting.avatarColor, color: "#fff" }} />
@@ -261,9 +260,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
         </div>
       </div>
 
-      {/* Body */}
       <div className={styles.body}>
-        {/* Topics & Agenda */}
         <div className={styles.section}>
           <Text className={styles.sectionTitle}>
             Topics & Agenda ({meeting.topics.length})
@@ -322,7 +319,6 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
 
         <Divider />
 
-        {/* Meeting Notes */}
         <div className={styles.section}>
           <Text className={styles.sectionTitle}>Meeting Notes</Text>
           <Textarea
@@ -336,7 +332,6 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
 
         <Divider />
 
-        {/* Follow-up Actions */}
         <div className={styles.section}>
           <Text className={styles.sectionTitle}>
             Follow-up Actions ({meeting.followUps.length})
@@ -394,7 +389,6 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({
 
         <Divider />
 
-        {/* View Profile */}
         <Button
           appearance="subtle"
           icon={<Person20Regular />}

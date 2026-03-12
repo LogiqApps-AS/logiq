@@ -118,10 +118,10 @@ public sealed class WellbeingRiskAnalyzer(
         }
         try
         {
-#pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+#pragma warning disable CA1869
             WellbeingAnalysis? result = JsonSerializer.Deserialize<WellbeingAnalysis>(json,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true });
-#pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+#pragma warning restore CA1869
             if (result == null)
             {
                 logger.LogWarning("WellbeingAnalysis: Deserialized but result null");

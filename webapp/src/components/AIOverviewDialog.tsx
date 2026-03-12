@@ -355,13 +355,11 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
 
   const renderSkeleton = () => (
     <div>
-      {/* Loading header */}
       <div className={styles.loadingHeader}>
         <Sparkle20Filled className={styles.sparkleAnimated} />
         <Text size={300} className={styles.loadingStatus}>{LOADING_STEPS[loadingState.step]}</Text>
       </div>
 
-      {/* Persona skeleton */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
         <div className={styles.shimmerPill} style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
         <div style={{ flex: 1 }}>
@@ -370,21 +368,18 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         </div>
       </div>
 
-      {/* Score grid skeleton */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "20px" }}>
         {[1, 2, 3, 4].map((num) => (
           <div key={`score-skeleton-${num}`} className={styles.shimmerBlock} style={{ height: "56px" }} />
         ))}
       </div>
 
-      {/* Summary skeleton */}
       <div className={styles.shimmerLine} style={{ width: "100%" }} />
       <div className={styles.shimmerLine} style={{ width: "90%" }} />
       <div className={styles.shimmerLine} style={{ width: "75%", marginBottom: "20px" }} />
 
       <Divider style={{ margin: "0 0 16px" }} />
 
-      {/* Strengths skeleton */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
         <div className={styles.shimmerPill} style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
         <div className={styles.shimmerLine} style={{ width: "80px", marginBottom: 0 }} />
@@ -395,7 +390,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         ))}
       </div>
 
-      {/* Recommendations skeleton */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
         <div className={styles.shimmerPill} style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
         <div className={styles.shimmerLine} style={{ width: "120px", marginBottom: 0 }} />
@@ -416,7 +410,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
     >
       {loadingState.isLoading || detailLoading ? renderSkeleton() : (
       <div className={styles.contentFadeIn}>
-      {/* Employee info */}
       <div style={{ marginBottom: "16px" }}>
         <Persona
           name={employee.name}
@@ -427,7 +420,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         />
       </div>
 
-      {/* Score overview */}
       <div className={styles.scoreGrid}>
         {scores.map((s) => (
           <div key={s.label} className={styles.scoreItem}>
@@ -437,7 +429,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         ))}
       </div>
 
-      {/* Churn risk bar */}
       {employee.churnPercent > 20 && (
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", padding: "10px 12px", borderRadius: "8px", backgroundColor: employee.churnRisk === "At risk" ? "#fef0f1" : "#fff8f0" }}>
           <Text size={200}>Churn Risk</Text>
@@ -448,14 +439,12 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         </div>
       )}
 
-      {/* Summary */}
       <div className={styles.section}>
         <Text className={styles.summaryText}>{summary}</Text>
       </div>
 
       <Divider style={{ margin: "0 0 16px" }} />
 
-      {/* Strengths */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <ThumbLike16Filled style={{ color: "#107c41" }} />
@@ -468,7 +457,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         </div>
       </div>
 
-      {/* Weaknesses */}
       {weaknesses.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
@@ -483,7 +471,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         </div>
       )}
 
-      {/* Experience */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <Briefcase16Filled style={{ color: "#5b5fc7" }} />
@@ -516,7 +503,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
 
       <Divider style={{ margin: "0 0 16px" }} />
 
-      {/* Recommendations */}
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <Lightbulb16Filled style={{ color: "#f7630c" }} />
@@ -535,7 +521,6 @@ export const AIOverviewDialog: React.FC<AIOverviewDialogProps> = ({ open, onClos
         ))}
       </div>
 
-      {/* Key metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
         {[
           { label: "360 Feedback", value: employee.feedbackScore360, icon: <Trophy16Filled style={{ color: "#f7b731" }} /> },

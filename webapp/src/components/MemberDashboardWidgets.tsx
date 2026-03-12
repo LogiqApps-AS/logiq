@@ -136,7 +136,6 @@ const MemberDashboardWidgets: React.FC = () => {
 
   return (
     <>
-      {/* Header */}
       <PageHeader
         title="Your Dashboard"
         subtitle="Personal intelligence and growth insights"
@@ -147,7 +146,6 @@ const MemberDashboardWidgets: React.FC = () => {
         }
       />
 
-      {/* KPI Cards */}
       <div className={styles.kpiRow}>
         {kpis.map((kpi) => {
           const c = kpiColors[kpi.status] ?? kpiColors.green;
@@ -167,7 +165,6 @@ const MemberDashboardWidgets: React.FC = () => {
         })}
       </div>
 
-      {/* Two column: Signals + Dev Plan */}
       <div className={styles.twoCol}>
         <div>
           <div className={styles.sectionHeader}>
@@ -245,7 +242,6 @@ const MemberDashboardWidgets: React.FC = () => {
         </div>
       </div>
 
-      {/* Delivery KPIs */}
       <div style={{ marginTop: "24px" }}>
         <div className={styles.sectionHeader}>
           <Text size={500} weight="bold">Delivery Overview</Text>

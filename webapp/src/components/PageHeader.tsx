@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  /** Optional right-aligned actions */
   actions?: ReactNode;
 }
 

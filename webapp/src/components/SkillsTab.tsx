@@ -246,7 +246,7 @@ const SkillsTab: React.FC = () => {
   const totalPages = Math.ceil(filteredEmployees.length / PAGE_SIZE);
   const paged = filteredEmployees.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Show skills columns: if filtered, show those; else show all
+
   const visibleSkills = selectedSkills.size > 0 ? allSkills.filter((s) => selectedSkills.has(s)).concat(allSkills.filter((s) => !selectedSkills.has(s))) : allSkills;
 
   return (

@@ -64,14 +64,6 @@ interface AISummaryCardProps {
   showDisclaimer?: boolean;
 }
 
-/**
- * Reusable AI Summary Card component with consistent LogIQ branding
- * 
- * @param title - Custom title for the AI summary (defaults to "LogIQ™ AI Insights")
- * @param children - Main summary content/text
- * @param insights - Optional insight grid items
- * @param showDisclaimer - Whether to show AI disclaimer tooltip (default: true)
- */
 export const AISummaryCard: React.FC<AISummaryCardProps> = ({
   title = "LogIQ™ AI Insights",
   children,
@@ -131,9 +123,6 @@ interface InsightItemProps {
   description: string;
 }
 
-/**
- * Individual insight item for use within AISummaryCard
- */
 export const InsightItem: React.FC<InsightItemProps> = ({ icon, title, description }) => {
   const styles = useStyles();
 

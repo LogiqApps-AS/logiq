@@ -311,7 +311,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
           </PopoverTrigger>
           <PopoverSurface>
             <div className={styles.popoverContent}>
-              {/* Header */}
               <div className={styles.popoverHeader}>
                 <Text weight="semibold" size={400}>LogIQ</Text>
                 <div className={styles.signOutLink} onClick={() => navigate('/')}>
@@ -320,7 +319,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
                 </div>
               </div>
 
-              {/* User Info */}
               <div className={styles.userInfo}>
                 <Persona
                   name={userName}
@@ -335,7 +333,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
                 </div>
               </div>
 
-              {/* Role Switcher */}
               <div className={styles.roleSwitcher}>
                 <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>Switch role</Text>
                 <div className={styles.roleSwitcherButtons}>
@@ -354,7 +351,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isNavOpen, onToggleNav }) 
                 </div>
               </div>
 
-              {/* Set work location */}
               <div className={styles.popoverItem}>
                 <div className={styles.itemLeft}>
                   <Location20Regular style={{ fontSize: "20px", color: tokens.colorNeutralForeground3 }} />

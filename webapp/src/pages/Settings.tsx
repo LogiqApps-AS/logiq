@@ -240,7 +240,7 @@ const Settings = () => {
     Object.fromEntries(features.map((f) => [f.id, f.defaultOn]))
   );
 
-  // Reset toggles when role changes
+
   const [prevRole, setPrevRole] = useState(role);
   if (role !== prevRole) {
     setPrevRole(role);
@@ -296,7 +296,6 @@ const Settings = () => {
                       />
                     </div>
 
-                    {/* Extra config for Teams channel */}
                     {feature.id === "teams-channel" && toggles["teams-channel"] && (
                       <div className={styles.dropdownRow}>
                         <Text size={200} style={{ color: tokens.colorNeutralForeground3, whiteSpace: "nowrap" }}>
@@ -316,7 +315,6 @@ const Settings = () => {
                       </div>
                     )}
 
-                    {/* Extra config for wellbeing digest frequency */}
                     {feature.id === "wellbeing-digest" && toggles["wellbeing-digest"] && (
                       <div className={styles.dropdownRow}>
                         <Text size={200} style={{ color: tokens.colorNeutralForeground3, whiteSpace: "nowrap" }}>
@@ -337,7 +335,6 @@ const Settings = () => {
                   </div>
                 ))}
 
-                {/* Sync status footer */}
                 {category === "communication" && (
                   <div className={styles.statusRow}>
                     <div className={styles.syncInfo}>

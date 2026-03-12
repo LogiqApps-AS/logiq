@@ -1,7 +1,3 @@
-/**
- * Reusable loading and error state components.
- * Provides skeleton loaders for various dashboard patterns and a retry-able error card.
- */
 import { makeStyles, mergeClasses, tokens, Text, Button, Card } from "@fluentui/react-components";
 import { ArrowClockwise20Regular, ErrorCircle20Regular } from "@fluentui/react-icons";
 
@@ -70,7 +66,6 @@ const useStyles = makeStyles({
   },
 });
 
-// ─── Skeleton Block ────────────────────────────────────────────────
 interface SkeletonBlockProps {
   width?: string;
   height?: string;
@@ -93,7 +88,6 @@ export const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
   );
 };
 
-// ─── Error State ───────────────────────────────────────────────────
 interface ErrorStateProps {
   message?: string;
   onRetry?: () => void;
@@ -127,7 +121,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   );
 };
 
-// ─── KPI Cards Skeleton ────────────────────────────────────────────
 export const KPICardsSkeleton: React.FC = () => {
   const styles = useStyles();
   return (
@@ -150,7 +143,6 @@ export const KPICardsSkeleton: React.FC = () => {
   );
 };
 
-// ─── Financial Summary Skeleton ────────────────────────────────────
 export const FinancialSummarySkeleton: React.FC = () => {
   const styles = useStyles();
   return (
@@ -168,7 +160,6 @@ export const FinancialSummarySkeleton: React.FC = () => {
   );
 };
 
-// ─── Signals Skeleton ──────────────────────────────────────────────
 export const SignalsSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => {
   const styles = useStyles();
   return (
@@ -191,7 +182,6 @@ export const SignalsSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => 
   );
 };
 
-// ─── At-Risk Employees Skeleton ────────────────────────────────────
 export const AtRiskSkeleton: React.FC<{ count?: number }> = ({ count = 2 }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
@@ -222,7 +212,6 @@ export const AtRiskSkeleton: React.FC<{ count?: number }> = ({ count = 2 }) => (
   </div>
 );
 
-// ─── Team Grid Skeleton ────────────────────────────────────────────
 export const TeamGridSkeleton: React.FC<{ count?: number }> = ({ count = 6 }) => {
   const styles = useStyles();
   return (

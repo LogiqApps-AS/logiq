@@ -87,7 +87,6 @@ const MemberWellbeing: React.FC = () => {
       <div className={styles.container}>
         <PageHeader title="Well-Being" subtitle="Track your wellbeing, complete check-ins, and view personalized recommendations" />
 
-        {/* Status overview */}
         <div className={styles.statusGrid}>
           {wellbeingMetrics.map((m) => (
             <Card key={m.label} className={styles.statusCard}>
@@ -99,7 +98,6 @@ const MemberWellbeing: React.FC = () => {
         </div>
 
         <div className={styles.twoCol}>
-          {/* Check-in */}
           <div>
             <div className={styles.sectionHeader} style={{ marginTop: 0 }}>
               <Text size={500} weight="bold">Weekly Check-In</Text>
@@ -140,7 +138,6 @@ const MemberWellbeing: React.FC = () => {
             </Card>
           </div>
 
-          {/* Tips */}
           <div>
             <div className={styles.sectionHeader} style={{ marginTop: 0 }}>
               <Text size={500} weight="bold">Personalized Tips</Text>
@@ -159,7 +156,6 @@ const MemberWellbeing: React.FC = () => {
           </div>
         </div>
 
-        {/* Past results */}
         <div className={styles.sectionHeader}>
           <Text size={500} weight="bold">Past Check-In Results</Text>
         </div>

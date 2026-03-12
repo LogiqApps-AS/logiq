@@ -1,7 +1,3 @@
-/**
- * API and app types. All runtime data comes from the backend via apiClient.
- */
-
 export type KPIStatus = "green" | "yellow" | "red";
 
 export interface Employee {
@@ -49,7 +45,6 @@ export interface Signal {
   actionLabel?: string;
 }
 
-// Meetings
 export interface MeetingTopic {
   id: string;
   icon: "heart" | "target" | "chart";
@@ -83,7 +78,6 @@ export interface DeferredTopic {
   person: string;
 }
 
-// Member detail
 export interface Project {
   id: string;
   title: string;
@@ -157,7 +151,6 @@ export interface MemberDetail {
   projectCount: number;
 }
 
-// Member dashboard
 export interface MemberSignal {
   id: string;
   type: "warning" | "opportunity" | "recognition" | "wellbeing" | "milestone";
@@ -232,7 +225,6 @@ export interface SkillsMatrix {
   employeeSkills: Record<string, string[]>;
 }
 
-// Team KPIs
 export interface TeamKpiMetric {
   score: number;
   status: "green" | "yellow" | "red";

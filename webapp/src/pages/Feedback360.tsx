@@ -156,7 +156,6 @@ const Feedback360: React.FC = () => {
         View feedback, request peer reviews, and track your growth areas
       </Text>
 
-        {/* Stats */}
         <div className={styles.statsGrid}>
           {feedbackStats.map((s) => (
             <Card key={s.label} className={styles.statCard}>
@@ -168,7 +167,6 @@ const Feedback360: React.FC = () => {
         </div>
 
         <div className={styles.twoCol}>
-          {/* Recent feedback */}
           <div>
             <div className={styles.sectionHeader} style={{ marginTop: 0 }}>
               <Text size={500} weight="bold">Recent Feedback</Text>
@@ -202,7 +200,6 @@ const Feedback360: React.FC = () => {
             ))}
           </div>
 
-          {/* Request + Skill ratings */}
           <div>
             <div className={styles.sectionHeader} style={{ marginTop: 0 }}>
               <Text size={500} weight="bold">Request Feedback</Text>
