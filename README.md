@@ -62,7 +62,7 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
 
 ## 🎯 Solution Overview
 
-**Problem:** Team leads and people partners need a single place to see team health, risks, and readiness for 1:1s. Team members need support preparing for conversations and growth without switching tools.
+**Problem:** Organizations have data about their people scattered across HR systems, surveys, project tools, and communication platforms — but no intelligent layer connecting it. Leaders can't see team health at a glance. People partners react to problems instead of preventing them. And employees are left navigating growth, feedback, and wellbeing without proactive, personalized support.
 
 **What LogIQ does:**
 
