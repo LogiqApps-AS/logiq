@@ -2,7 +2,12 @@
 
 [![AI Dev Days Hackathon](https://img.shields.io/badge/AI_Dev_Days-Hackathon-blue)](https://aka.ms/aidevdayshackathon)
 
-LogIQ is an AI-powered people and team intelligence platform built for the [AI Dev Days Hackathon](https://github.com/Azure/AI-Dev-Days-Hackathon). It helps team leads and people partners understand team health, wellbeing risk, skills gaps, and delivery load and it helps individual contributors prepare for 1:1s and growth conversations. The system uses a multi-agent pipeline backed by MCP (Model Context Protocol) tools, Azure OpenAI (chat and embedding models), and Azure AI Search for RAG.
+LogIQ is an AI-powered people and team intelligence platform built for the [AI Dev Days Hackathon](https://github.com/Azure/AI-Dev-Days-Hackathon). It helps team leads and people partners understand team health, wellbeing risk, skills gaps, and delivery load and it helps individual contributors prepare for 1:1s and growth conversations. The system uses a multi-agent pipeline
+## Backed by
+
+![MCP](https://img.shields.io/badge/MCP%20(Model%20Context%20Protocol)-Yes-pink "Yes")
+![Azure Open AI](https://img.shields.io/badge/Azure%20Open%20AI-Yes-pink "Yes")
+![Azure AI Search](https://img.shields.io/badge/Azure%20AI%20Search-Yes-pink "Yes")
 
 ---
 
