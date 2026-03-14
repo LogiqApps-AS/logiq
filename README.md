@@ -3,7 +3,7 @@
 [![AI Dev Days Hackathon](https://img.shields.io/badge/AI_Dev_Days-Hackathon-blue)](https://aka.ms/aidevdayshackathon)
 
 LogIQ is an AI multi-agent system by LogiqApps that replaces the traditional People Partner / HR Business built for the [AI Dev Days Hackathon](https://github.com/Azure/AI-Dev-Days-Hackathon).Two actors served equally: Team Leads who manage teams and prepare for 1:1s, and Team
-Members who own their development journey. LogIQ is proactive — it comes to you with signals, not
+Members who own their development journey. LogIQ is proactive - it comes to you with signals, not
 dashboards. The system uses a multi-agent pipeline
 ## Backed by
 
