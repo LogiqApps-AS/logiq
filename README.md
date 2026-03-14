@@ -110,6 +110,8 @@ LogIQ addresses this challenge by introducing an AI-powered multi-agent system t
 
 ## 🏗️ Architecture Overview
 
+![image](/docs/LogIQ-SystemContext.png)
+
 ### Level 1 - System Context (HLA)
 
 **Actors**, the **LogIQ system**, and **external systems**.
