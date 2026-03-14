@@ -18,8 +18,8 @@ dashboards. The system uses a multi-agent pipeline
 - [🎯 Solution Overview](#-solution-overview)
 - [🛠️ Technology Stack](#️-technology-stack)
 - [🏗️ Architecture Overview](#️-architecture-overview)
-  - [Level 1 - System Context (HLA)](#level-1--system-context-hla)
-  - [Level 2 - Container Diagram (Backend)](#level-2--container-diagram-backend)
+  - [Level 1 - System Context (HLA)](#level-1---system-context-hla)
+  - [Level 2 - Container Diagram (Backend)](#level-2---container-diagram-backend)
 - [📊 Flow Sequence Diagrams](#-flow-sequence-diagrams)
   - [Copilot (lead) & Coach (member) Chat with RAG](#copilot-lead--coach-member-chat-with-rag)
   - [Conversation Prep (Orchestrated Analyzers + MCP)](#conversation-prep-orchestrated-analyzers--mcp)
@@ -30,10 +30,10 @@ dashboards. The system uses a multi-agent pipeline
   - [Azure OpenAI](#azure-openai)
   - [Azure AI Search](#azure-ai-search)
 - [🤖 Agents](#-agents)
-  - [Layer 1 - MCP Servers (C# SDK)](#layer-1--mcp-servers-c-sdk)
-  - [Layer 2 - Analyzer Agents (Semantic Kernel)](#layer-2--analyzer-agents-semantic-kernel)
-  - [Layer 3 - Conversation Prep Agent (A2A)](#layer-3--conversation-prep-agent-a2a)
-  - [Layer 4 - Role-Specific Copilots](#layer-4--role-specific-copilots)
+  - [Layer 1 - MCP Servers (C# SDK)](#layer-1---mcp-servers-c-sdk)
+  - [Layer 2 - Analyzer Agents (Semantic Kernel)](#layer-2---analyzer-agents-semantic-kernel)
+  - [Layer 3 - Conversation Prep Agent (A2A)](#layer-3---conversation-prep-agent-a2a)
+  - [Layer 4 - Role-Specific Copilots](#layer-4---role-specific-copilots)
 - [🧪 Agents Orchestration](#-agents-orchestration)
   - [Analyzer Layer (MCP-driven)](#analyzer-layer-mcp-driven)
   - [Conversation Prep (A2A-style)](#conversation-prep-a2a-style)
@@ -110,7 +110,7 @@ LogIQ addresses this challenge by introducing an AI-powered multi-agent system t
 
 ## 🏗️ Architecture Overview
 
-### Level 1 — System Context (HLA)
+### Level 1 - System Context (HLA)
 
 **Actors**, the **LogIQ system**, and **external systems**.
 
@@ -145,7 +145,7 @@ LogIQ addresses this challenge by introducing an AI-powered multi-agent system t
 └──────────────────────┘
 ```
 
-### Level 2 — Container Diagram (Backend)
+### Level 2 - Container Diagram (Backend)
 
 Containers **inside** LogIQ and how the backend is structured.
 
@@ -168,7 +168,7 @@ Containers **inside** LogIQ and how the backend is structured.
 │           HTTP (REST API)                                │                 │
 └──────────────────────────────────────────────────────────│─────────────────┘
                                                            │
-                    Backend API — internal containers      │
+                    Backend API - internal containers      │
                     ─────────────────────────────────────────
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
@@ -233,12 +233,12 @@ sequenceDiagram
   participant OpenAI as Azure OpenAI
 
   U->>W: Open Copilot (lead) or AI Coach (member), send message
-  alt Lead — Copilot
+  alt Lead - Copilot
     W->>API: POST api/copilot/chat { message, teamId }
     API->>Agent: PeoplePartnerCopilot.ChatAsync(teamId, request)
     Agent->>Repos: ListByTeamAsync, GetCurrentAsync (KPIs), ListTeamSignalsAsync
     Repos-->>Agent: employees, KPIs, signals
-  else Member — Coach
+  else Member - Coach
     W->>API: POST api/coach/chat { message, memberId, teamId }
     API->>Agent: DevelopmentCoach.ChatAsync(memberId, request)
     Agent->>Repos: GetByIdAsync (employee), GetDashboardAsync (member)
@@ -388,7 +388,7 @@ Provides the RAG index vector search and HNSW vector profile.
 | **PeoplePartnerCopilot**     | Chat for leads: team health, 1:1 prep, signals, KPIs; uses RAG for knowledge                                   | CopilotController                               | IEmployeeRepository, ITeamKpiRepository, ISignalRepository, IRagService |
 | **DevelopmentCoach**         | Chat for members: growth, 1:1 prep, goals; uses RAG                                                            | CoachController                                 | IEmployeeRepository, IMemberRepository, IRagService                     |
 
-### Layer 1 — MCP Servers (C# SDK)
+### Layer 1 - MCP Servers (C# SDK)
 
 Four `[McpServerToolType]` classes expose Azure Table Storage data as MCP tools:
 
@@ -399,15 +399,15 @@ Four `[McpServerToolType]` classes expose Azure Table Storage data as MCP tools:
 | `LearningSkillsTools`   | `GetTrainingRecords`, `GetIdpGoals`, `GetSkillAssessments`, `GetMemberSkillProfile` |
 | `WellbeingSignalsTools` | `GetPulseResults`, `GetSafetyScores`, `GetTeamSignals`, `GetSentimentTrends`        |
 
-### Layer 2 — Analyzer Agents (Semantic Kernel)
+### Layer 2 - Analyzer Agents (Semantic Kernel)
 
 Three `ChatCompletionAgent` instances run in parallel via `Task.WhenAll`:
 
-- **WellbeingRiskAnalyzer** — detects burnout, sick-leave spikes, psych-safety drops → `WellbeingAnalysis`
-- **SkillsGrowthAnalyzer** — maps skill gaps, IDP progress, learning debt → `SkillsAnalysis`
-- **DeliveryWorkloadAnalyzer** — flags sprint anomalies, PR velocity drops, overload → `DeliveryAnalysis`
+- **WellbeingRiskAnalyzer** - detects burnout, sick-leave spikes, psych-safety drops → `WellbeingAnalysis`
+- **SkillsGrowthAnalyzer** - maps skill gaps, IDP progress, learning debt → `SkillsAnalysis`
+- **DeliveryWorkloadAnalyzer** - flags sprint anomalies, PR velocity drops, overload → `DeliveryAnalysis`
 
-### Layer 3 — Conversation Prep Agent (A2A)
+### Layer 3 - Conversation Prep Agent (A2A)
 
 Receives all three `Analysis` records via Agent-to-Agent pattern, combines with HR context, and generates `ConversationPrep` with:
 
@@ -416,10 +416,10 @@ Receives all three `Analysis` records via Agent-to-Agent pattern, combines with 
 - Coach tips and empathetic questions
 - Context summary for the lead
 
-### Layer 4 — Role-Specific Copilots
+### Layer 4 - Role-Specific Copilots
 
-- **PeoplePartnerCopilot** (Team Lead) — RAG via Azure AI Search, team-wide context, proactive recommendations
-- **DevelopmentCoach** (Team Member) — private coaching with individual employee context, career guidance
+- **PeoplePartnerCopilot** (Team Lead) - RAG via Azure AI Search, team-wide context, proactive recommendations
+- **DevelopmentCoach** (Team Member) - private coaching with individual employee context, career guidance
 
 ---
 
@@ -593,7 +593,7 @@ dotnet run
 
 #### Configuration
 
-All configuration lives in `appsettings.json` — no hardcoded strings:
+All configuration lives in `appsettings.json` - no hardcoded strings:
 
 ```json
 {
