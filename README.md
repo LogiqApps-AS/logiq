@@ -2,7 +2,9 @@
 
 [![AI Dev Days Hackathon](https://img.shields.io/badge/AI_Dev_Days-Hackathon-blue)](https://aka.ms/aidevdayshackathon)
 
-LogIQ is an AI-powered people and team intelligence platform built for the [AI Dev Days Hackathon](https://github.com/Azure/AI-Dev-Days-Hackathon). It helps team leads and people partners understand team health, wellbeing risk, skills gaps, and delivery load and it helps individual contributors prepare for 1:1s and growth conversations. The system uses a multi-agent pipeline
+LogIQ is an AI multi-agent system by LogiqApps that replaces the traditional People Partner / HR Business built for the [AI Dev Days Hackathon](https://github.com/Azure/AI-Dev-Days-Hackathon).Two actors served equally: Team Leads who manage teams and prepare for 1:1s, and Team
+Members who own their development journey. LogIQ is proactive — it comes to you with signals, not
+dashboards. The system uses a multi-agent pipeline
 ## Backed by
 
 ![MCP](https://img.shields.io/badge/MCP%20(Model%20Context%20Protocol)-Yes-pink "Yes")
@@ -67,7 +69,11 @@ LogIQ is an AI-powered people and team intelligence platform built for the [AI D
 
 ## 🎯 Solution Overview
 
-**Problem:** Organizations have data about their people scattered across HR systems, surveys, project tools, and communication platforms, but no intelligent layer connecting it. Leaders can't see team health at a glance. People partners react to problems instead of preventing them. And employees are left navigating growth, feedback, and wellbeing without proactive, personalized support.
+**Problem:** Modern organizations struggle to translate people data into actionable insights that improve team performance and employee development. Managers rely on fragmented tools (HR systems, LMS, surveys, project tools) and reactive dashboards, making it difficult to detect early signals of burnout, skill gaps, declining motivation, or churn risk.
+
+As a result, critical people-related decisions are often made too late or based on incomplete information. Training investments fail to translate into measurable performance improvements, while leaders lack the tools to proactively support their teams.
+
+LogIQ addresses this challenge by introducing an AI-powered multi-agent system that continuously analyzes signals across well-being, skills development, motivation, retention, and workload, and converts them into proactive insights and coaching for both team leads and employees.
 
 **What LogIQ does:**
 
