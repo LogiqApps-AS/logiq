@@ -118,7 +118,7 @@ LogIQ addresses this challenge by introducing an AI-powered multi-agent system t
      ┌─────────────────┐              ┌─────────────────┐
      │   Team Lead     │              │  Team Member    │
      │   ---------     │              │  -----------    │
-     │ (People Partner)│              │ (IC / Employee) │
+     │ (HR/Ppl-Partner)│              │ (IC / Employee) │
      └────────┬────────┘              └────────┬────────┘
               │                                │
               └──────────────┬─────────────────┘
@@ -174,8 +174,8 @@ Containers **inside** LogIQ and how the backend is structured.
         ▼                     ▼                     ▼
 ┌───────────────┐   ┌──────────────────────┐   ┌─────────────────────┐
 │ REST API      │   │ Analyzer Orchestrator│   │ Copilot & Coach     │
-│ (Controllers) │   │ (Semantic Kernel)    │   │ (PeoplePartner +    │
-│ Teams,        │   │ WellbeingRisk,       │   │  DevelopmentCoach)  │
+│ (Controllers) │   │ (Semantic Kernel)    │   │ (AI Copilot (lead) +│
+│ Teams,        │   │ WellbeingRisk,       │   │  AI Coach)          │
 │ Members,      │   │ SkillsGrowth,        │   │ RAG + repos,        │
 │ Meetings,     │   │ DeliveryWorkload,    │   │ Azure OpenAI chat   │
 │ Prep, Chat    │   │ ConversationPrep     │   └──────────┬──────────┘
@@ -217,9 +217,9 @@ Containers **inside** LogIQ and how the backend is structured.
 
 ### Copilot (lead) & Coach (member) Chat with RAG
 
-**Copilot (lead):** User opens Copilot from the FAB, sends a message. Frontend calls `POST api/copilot/chat` with message and teamId. CopilotController calls PeoplePartnerCopilot, which loads employees, KPIs, signals and RAG context, builds the system prompt, invokes the chat agent, and returns reply and suggestions.
+**Copilot (lead):** User opens Copilot from the FAB, sends a message. Frontend calls `POST api/copilot/chat` with message and teamId. CopilotController calls AI Copilot (lead)Copilot, which loads employees, KPIs, signals and RAG context, builds the system prompt, invokes the chat agent, and returns reply and suggestions.
 
-**Coach (member):** User opens AI Coach, sends a message. Frontend calls `POST api/coach/chat` with message, memberId, teamId. CoachController calls DevelopmentCoach, which loads employee and member dashboard plus RAG context, builds the prompt, invokes the chat agent, and returns reply and suggestions.
+**Coach (member):** User opens AI Coach, sends a message. Frontend calls `POST api/coach/chat` with message, memberId, teamId. CoachController calls , which loads employee and member dashboard plus RAG context, builds the prompt, invokes the chat agent, and returns reply and suggestions.
 
 ```mermaid
 sequenceDiagram
@@ -235,12 +235,12 @@ sequenceDiagram
   U->>W: Open Copilot (lead) or AI Coach (member), send message
   alt Lead - Copilot
     W->>API: POST api/copilot/chat { message, teamId }
-    API->>Agent: PeoplePartnerCopilot.ChatAsync(teamId, request)
+    API->>Agent: AI Copilot (lead)Copilot.ChatAsync(teamId, request)
     Agent->>Repos: ListByTeamAsync, GetCurrentAsync (KPIs), ListTeamSignalsAsync
     Repos-->>Agent: employees, KPIs, signals
   else Member - Coach
     W->>API: POST api/coach/chat { message, memberId, teamId }
-    API->>Agent: DevelopmentCoach.ChatAsync(memberId, request)
+    API->>Agent: .ChatAsync(memberId, request)
     Agent->>Repos: GetByIdAsync (employee), GetDashboardAsync (member)
     Repos-->>Agent: employee, dashboard
   end
@@ -385,8 +385,8 @@ Provides the RAG index vector search and HNSW vector profile.
 | **SkillsGrowthAnalyzer**     | Analyzes skills coverage, IDP progress, learning; produces SkillsAnalysis                                      | AnalyzerOrchestrator                            | LearningSkillsTools (→ repos)                                           |
 | **DeliveryWorkloadAnalyzer** | Analyzes velocity, meeting load, overtime; produces DeliveryAnalysis and persists workload signals             | AnalyzerOrchestrator                            | DeliveryMetricsTools (→ repos)                                          |
 | **ConversationPrepAgent**    | Builds 1:1 brief (ConversationPrep) from wellbeing + skills + delivery + meetings/deferred                     | AnalyzerOrchestrator (PrepareConversationAsync) | HrDataGatewayTools, IEmployeeRepository, IMemberRepository              |
-| **PeoplePartnerCopilot**     | Chat for leads: team health, 1:1 prep, signals, KPIs; uses RAG for knowledge                                   | CopilotController                               | IEmployeeRepository, ITeamKpiRepository, ISignalRepository, IRagService |
-| **DevelopmentCoach**         | Chat for members: growth, 1:1 prep, goals; uses RAG                                                            | CoachController                                 | IEmployeeRepository, IMemberRepository, IRagService                     |
+| **AI Copilot (lead)**     | Chat for leads: team health, 1:1 prep, signals, KPIs; uses RAG for knowledge                                   | CopilotController                               | IEmployeeRepository, ITeamKpiRepository, ISignalRepository, IRagService |
+| **AI Coach (member)**         | Chat for members: growth, 1:1 prep, goals; uses RAG                                                            | CoachController                                 | IEmployeeRepository, IMemberRepository, IRagService                     |
 
 ### Layer 1 - MCP Servers (C# SDK)
 
@@ -418,8 +418,8 @@ Receives all three `Analysis` records via Agent-to-Agent pattern, combines with 
 
 ### Layer 4 - Role-Specific Copilots
 
-- **PeoplePartnerCopilot** (Team Lead) - RAG via Azure AI Search, team-wide context, proactive recommendations
-- **DevelopmentCoach** (Team Member) - private coaching with individual employee context, career guidance
+- **AI Copilot (lead)** (Team Lead) - RAG via Azure AI Search, team-wide context, proactive recommendations
+- **AI Coach (member)** (Team Member) - private coaching with individual employee context, career guidance
 
 ---
 
@@ -445,8 +445,8 @@ Three analyzer agents run in parallel via `AnalyzerOrchestrator`:
 
 | Agent                    | Audience                   | Data                                                         | AI                              |
 | ------------------------ | -------------------------- | ------------------------------------------------------------ | ------------------------------- |
-| **PeoplePartnerCopilot** | Team lead / people partner | EmployeeRepository, TeamKpiRepository, SignalRepository, RAG | Azure OpenAI chat + RAG context |
-| **DevelopmentCoach**     | Team member                | EmployeeRepository, MemberRepository, RAG                    | Azure OpenAI chat + RAG context |
+| **AI Copilot (lead)**    | Team lead / Ppl-partner | EmployeeRepository, TeamKpiRepository, SignalRepository, RAG | Azure OpenAI chat + RAG context |
+| **AI Coach (member)**     | Team member                | EmployeeRepository, MemberRepository, RAG                    | Azure OpenAI chat + RAG context |
 
 > Both use repositories and `IRagService` directly (no MCP in the chat path). They build a system prompt from loaded context and RAG snippets, then call the same Azure OpenAI chat deployment.
 
