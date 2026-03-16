@@ -11,6 +11,10 @@ dashboards. The system uses a multi-agent pipeline.
 ![Azure Open AI](https://img.shields.io/badge/Azure%20Open%20AI-Yes-pink "Yes")
 ![Azure AI Search](https://img.shields.io/badge/Azure%20AI%20Search-Yes-pink "Yes")
 
+## Live Demo
+
+https://logiq.logiqdata.com/
+
 ---
 
 ## Table of contents
